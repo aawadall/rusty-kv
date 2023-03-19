@@ -1,0 +1,48 @@
+@startuml - SimpleKV - High Level Design 
+
+title SimpleKV - High Level Design
+
+package "Cluster" {
+package "simple-kv" {
+    component "kv-server" as server
+    component "api" as api
+    component "persistence" as persistence
+    component "config" as config
+    component "authentication" as auth
+    component "cluster management" as cluster
+    component "Health" as health
+    database "local persistence" as local_persistence
+    database "cluster data" as cluster_data
+    database "config" as config_data
+}
+
+    node "node 2" as node2
+    node "node 3" as node3
+}
+
+
+actor "REST client" as rest_client
+component "REST SDK" as rest_sdk
+actor "gRPC client" as grpc_client
+component "gRPC SDK" as grpc_sdk
+
+rest_client ..> api : HTTP/S
+rest_client - rest_sdk 
+grpc_client ..> api : gRPC
+grpc_client - grpc_sdk
+
+auth - api : authentication
+api -down- server 
+
+server -left- persistence : frequently write in memory data\nand read from local at startup
+server -right- config : read config data
+server -- cluster : coordinate with other nodes, including\ncluster management, data replication, and data search
+
+config -. config_data
+persistence -. local_persistence
+cluster -. cluster_data
+
+cluster .. node2 : gRPC
+cluster .. node3 : gRPC
+
+@enduml
