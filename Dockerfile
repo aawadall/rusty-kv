@@ -1,6 +1,6 @@
 # Docker File for Simple-KV Node Server
 # Build Image is Go 1.20.2
-FROM golang:1.20.2-alpine3.14 AS build
+FROM golang:1.20.2 AS build
 
 # Set Source Directory
 WORKDIR /src
