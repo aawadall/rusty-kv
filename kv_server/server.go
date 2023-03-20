@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/aawadall/simple-kv/config"
 	"github.com/aawadall/simple-kv/types"
 )
 
@@ -17,6 +18,7 @@ type KVServer struct {
 	Records []KVRecord
 	logger  *log.Logger
 	state   ServerState
+	config  *config.ConfigurationManager
 }
 
 // NewKVServer - A function that creates a new KV Server
@@ -24,6 +26,7 @@ func NewKVServer() *KVServer {
 	return &KVServer{
 		Records: []KVRecord{},
 		logger:  log.New(log.Writer(), "KVServer", log.LstdFlags), // TODO = Read from config
+		config:  config.NewConfigurationManager(),
 		state:   types.ServerUnknownState,
 	}
 }
