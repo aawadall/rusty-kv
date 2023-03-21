@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -10,13 +11,16 @@ import (
 
 type ConfigurationManager struct {
 	Configuration map[string]interface{}
+	logger        *log.Logger
 }
 
 // NewConfigurationManager - A function that creates a new Configuration Manager
 func NewConfigurationManager() *ConfigurationManager {
 	cfg := &ConfigurationManager{
 		Configuration: make(map[string]interface{}),
+		logger:        log.New(os.Stdout, "CONFIG: ", log.LstdFlags),
 	}
+	cfg.logger.Println("Configuration Manager created")
 	cfg.LoadFromEnvironment()
 	return cfg
 }
@@ -65,7 +69,7 @@ func (c *ConfigurationManager) Set(key string, value interface{}) (err error) {
 
 // LoadFromEnvironment - A function that loads the configuration from the environment
 func (c *ConfigurationManager) LoadFromEnvironment() (err error) {
-	// TODO: implement this
+	c.logger.Println("Loading configuration from environment")
 	// Get all environment variables
 	envVars := os.Environ()
 
@@ -73,7 +77,7 @@ func (c *ConfigurationManager) LoadFromEnvironment() (err error) {
 	for _, envVar := range envVars {
 		// Split the environment variable into key and value
 		key, value := splitEnvVar(envVar)
-
+		c.logger.Printf("Loading configuration `%s` with value `%s`", key, value)
 		// Set the configuration
 		c.Set(key, value)
 	}
