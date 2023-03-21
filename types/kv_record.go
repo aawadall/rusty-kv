@@ -12,7 +12,7 @@ type KVRecord struct {
 	// define uuid id
 	Id       uuid.UUID
 	Key      string
-	Value    []byte
+	Value    [][]byte
 	Metadata map[string]string
 }
 
@@ -21,10 +21,10 @@ func NewKVRecord(key string, value []byte) *KVRecord {
 	record := &KVRecord{
 		Id:       uuid.New(),
 		Key:      key,
-		Value:    value,
+		Value:    make([][]byte, 0),
 		Metadata: make(map[string]string),
 	}
-
+	record.Value = append(record.Value, value)
 	record.Metadata["Version"] = "1"
 	return record
 }
@@ -153,7 +153,29 @@ func (r *KVRecord) UpdateRecord(key string, value []byte) (version int, err erro
 	r.Metadata["Version"] = fmt.Sprintf("%d", version)
 
 	r.Key = key
-	r.Value = value
+	// append the value to the value array
+	r.Value = append(r.Value, value)
 
 	return version, nil
+}
+
+// Get Value at version
+func (r *KVRecord) GetValue(version int) (value []byte, err error) {
+	// if version is -1 return last version
+	if version == -1 {
+		return r.Value[len(r.Value)-1], nil
+	}
+
+	// if version is greater than the length of the value array return error
+	if version > len(r.Value) {
+		return nil, fmt.Errorf("version %d does not exist", version)
+	}
+
+	// if version is 0 return error
+	if version == 0 {
+		return nil, fmt.Errorf("version cannot be 0")
+	}
+
+	// if version is a positive number return the value at that index
+	return r.Value[version-1], nil
 }

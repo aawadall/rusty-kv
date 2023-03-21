@@ -15,7 +15,7 @@ type ServerState = types.ServerState
 // KV Serever - A Struct that represents a KV Server
 type KVServer struct {
 	// TODO - Add fields here
-	Records []KVRecord
+	Records map[string]KVRecord
 	logger  *log.Logger
 	state   ServerState
 	config  *config.ConfigurationManager
@@ -24,7 +24,7 @@ type KVServer struct {
 // NewKVServer - A function that creates a new KV Server
 func NewKVServer() *KVServer {
 	return &KVServer{
-		Records: []KVRecord{},
+		Records: make(map[string]KVRecord),
 		logger:  log.New(log.Writer(), "KVServer", log.LstdFlags), // TODO = Read from config
 		config:  config.NewConfigurationManager(),
 		state:   types.ServerUnknownState,

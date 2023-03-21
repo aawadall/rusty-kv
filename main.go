@@ -22,6 +22,22 @@ func main() {
 		server.Start()
 	}()
 
+	// invoke a couple of operations
+	expected := "value1"
+	server.Set("key1", []byte(expected))
+	val, err := server.Get("key1")
+
+	if err != nil {
+		panic(err)
+	}
+
+	// cast value to string
+	sVal := string(val.([]byte))
+
+	// print both
+	println("Expected: ", expected)
+	println("Actual: ", sVal)
+
 	// sleep for a bit to simulate real stopping
 
 	time.Sleep(15 * time.Second)
