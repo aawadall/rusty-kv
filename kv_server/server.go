@@ -42,7 +42,7 @@ func (s *KVServer) Start() {
 		// TODO - Start the KV Server here
 		// Sleep for a bit to simulate real starting
 		time.Sleep(1 * time.Second)
-
+		s.state = types.ServerRunning
 		for s.state != types.ServerStopped &&
 			s.state != types.ServerError {
 			// TODO - Event loop code here
