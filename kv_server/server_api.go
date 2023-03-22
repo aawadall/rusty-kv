@@ -2,6 +2,7 @@ package kvserver
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aawadall/simple-kv/types"
 )
@@ -179,12 +180,135 @@ func (s *KVServer) GetAllMetadata(key string) (metadata map[string]string, err e
 
 // Find by partial key
 func (s *KVServer) Find(partialKey string) (keys []string, err error) {
-	// TODO - Implement this function
-	return nil, nil
+	// check if the partial key is empty
+	if partialKey == "" {
+		return nil, fmt.Errorf("partial key cannot be empty")
+	}
+
+	matchingKeys := []string{}
+
+	// loop through the records
+	for key := range s.Records {
+		// check if the key contains the partial key
+		if contains(key, partialKey) {
+			matchingKeys = append(matchingKeys, key)
+		}
+	}
+
+	return matchingKeys, nil
 }
 
 // Find by Metadata and comparison operators
 func (s *KVServer) FindByMetadata(query string) (keys []string, err error) {
-	// TODO - Implement this function
-	return nil, nil
+	// Assuming query is commma separated entries, each in the format of "key:operator:value"
+	// e.g. "name:contains:John,age:>=:18"
+	// also assuming that queries are ANDed together
+
+	// this is an expensive operation that is O(nxm) where n is the number of records and m is the number of query entries
+	//  check if the query is empty
+	if query == "" {
+		return nil, fmt.Errorf("query cannot be empty")
+	}
+
+	// split the query into individual entries
+	queryEntries := strings.Split(query, ",")
+
+	records := s.Records
+
+	// loop through the entries
+	for _, entry := range queryEntries {
+		// split the entry into key, operator and value
+		entryParts := strings.Split(entry, ":")
+
+		// check if the entry is in the correct format
+		if len(entryParts) != 3 {
+			return nil, fmt.Errorf("invalid query entry '%s'", entry)
+		}
+
+		// refine the records
+		records, err = refineRecords(records, entryParts)
+
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	// return the keys
+	keys = []string{}
+
+	for key := range records {
+		keys = append(keys, key)
+	}
+
+	return keys, nil
+}
+
+// Helper Functions
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
+}
+
+func refineRecords(records map[string]KVRecord, entryParts []string) (refinedRecords map[string]KVRecord, err error) {
+	// check if the entry is in the correct format
+	if len(entryParts) != 3 {
+		return nil, fmt.Errorf("invalid query entry '%s'", entryParts)
+	}
+
+	// get the key, operator and value
+	key := entryParts[0]
+	operator := entryParts[1]
+	value := entryParts[2]
+
+	// loop through the records
+	for recordKey, record := range records {
+		// check if the key exists
+		if _, ok := record.Metadata[key]; !ok {
+			delete(records, recordKey)
+			continue
+		}
+
+		// check if the operator is valid
+		if !isValidOperator(operator) {
+			return nil, fmt.Errorf("invalid operator '%s'", operator)
+		}
+
+		// check if the value matches
+		if !matches(record.Metadata[key], operator, value) {
+			delete(records, recordKey)
+			continue
+		}
+	}
+
+	return records, nil
+}
+
+func isValidOperator(operator string) bool {
+	switch operator {
+	case ">", ">=", "<", "<=", "==", "!=", "contains":
+		return true
+	default:
+		return false
+	}
+}
+
+func matches(value string, operator string, target string) bool {
+	switch operator {
+	case ">":
+		return value > target
+	case ">=":
+		return value >= target
+	case "<":
+		return value < target
+	case "<=":
+		return value <= target
+	case "==":
+		return value == target
+	case "!=":
+		return value != target
+	case "contains":
+		return contains(value, target)
+	default:
+		return false
+	}
 }
