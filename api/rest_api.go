@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"os"
 
-	kvserver "github.com/aawadall/simple-kv/kv_server"
+	"github.com/aawadall/simple-kv/types"
 )
 
 // REST API for the application
 type RestApi struct {
 	logger *log.Logger
-	server *kvserver.KVServer
+	server types.Server
 }
 
 // NewRestApi creates a new REST API
-func NewRestApi(server *kvserver.KVServer) *RestApi {
+func NewRestApi(server types.Server) *RestApi {
 	// TODO: Add configuration
 	return &RestApi{
 		logger: log.New(os.Stdout, "RestApi ", log.LstdFlags),

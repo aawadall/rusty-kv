@@ -44,6 +44,9 @@ func (s *KVServer) Start() {
 	go func() {
 		s.state = types.ServerStarting
 
+		// Start the REST API
+		s.rest.Start()
+
 		// TODO - Start the KV Server here
 		// Sleep for a bit to simulate real starting
 		time.Sleep(1 * time.Second)
