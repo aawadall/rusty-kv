@@ -2,6 +2,7 @@ package kvserver
 
 import (
 	"log"
+	"sync"
 	"time"
 
 	"github.com/aawadall/simple-kv/api"
@@ -39,7 +40,9 @@ func NewKVServer() *KVServer {
 // Start - A function that starts the KV Server
 func (s *KVServer) Start() {
 	// TODO - Start the KV Server here
+	wg := &sync.WaitGroup{}
 
+	wg.Add(1)
 	// Event loop in a goroutine
 	go func() {
 		s.state = types.ServerStarting
@@ -48,8 +51,7 @@ func (s *KVServer) Start() {
 		s.rest.Start()
 
 		// TODO - Start the KV Server here
-		// Sleep for a bit to simulate real starting
-		time.Sleep(1 * time.Second)
+
 		s.state = types.ServerRunning
 		for s.state != types.ServerStopped &&
 			s.state != types.ServerError {
@@ -62,7 +64,9 @@ func (s *KVServer) Start() {
 
 			s.logger.Printf("KV Server is %s", state)
 		}
+		wg.Done()
 	}()
+	wg.Wait()
 }
 
 func stateToString(s *KVServer) string {
@@ -92,8 +96,9 @@ func (s *KVServer) Stop() {
 	s.logger.Println("KV Server Stopping")
 	s.state = types.ServerStopping
 	// TODO - Stop the KV Server here
+	s.rest.Stop()
 	// Sleep for a bit to simulate real stopping
-	time.Sleep(10 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	// Write to log
 	s.state = types.ServerStopped

@@ -21,3 +21,27 @@ func (api *RestApi) handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(status)
 }
+
+// handler server start
+func (api *RestApi) handleStart(w http.ResponseWriter, r *http.Request) {
+	api.logger.Println("Handling start request")
+	// Start server
+	api.server.Start()
+
+	// Write status to response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("Server started")
+}
+
+// handler server stop
+func (api *RestApi) handleStop(w http.ResponseWriter, r *http.Request) {
+	api.logger.Println("Handling stop request")
+	// Stop server
+	api.server.Stop()
+
+	// Write status to response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("Server stopped")
+}

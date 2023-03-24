@@ -36,6 +36,10 @@ func (api *RestApi) Stop() {
 
 // handle requests
 func (api *RestApi) handleRequest() {
-	http.HandleFunc("/api/status", api.handleStatus)
+	// Server Router
+	http.HandleFunc("/api/server/status", api.handleStatus)
+	http.HandleFunc("/api/server/start", api.handleStart)
+	http.HandleFunc("/api/server/stop", api.handleStop)
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
