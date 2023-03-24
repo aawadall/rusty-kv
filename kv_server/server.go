@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/aawadall/simple-kv/api"
 	"github.com/aawadall/simple-kv/config"
 	"github.com/aawadall/simple-kv/types"
 )
@@ -19,16 +20,20 @@ type KVServer struct {
 	logger  *log.Logger
 	state   ServerState
 	config  *config.ConfigurationManager
+	rest    *api.RestApi
 }
 
 // NewKVServer - A function that creates a new KV Server
 func NewKVServer() *KVServer {
-	return &KVServer{
+	server := &KVServer{
 		Records: make(map[string]KVRecord),
-		logger:  log.New(log.Writer(), "KVServer", log.LstdFlags), // TODO = Read from config
+		logger:  log.New(log.Writer(), "KVServer", log.LstdFlags),
 		config:  config.NewConfigurationManager(),
 		state:   types.ServerUnknownState,
 	}
+	server.rest = api.NewRestApi(server)
+
+	return server
 }
 
 // Start - A function that starts the KV Server
@@ -48,28 +53,34 @@ func (s *KVServer) Start() {
 			// TODO - Event loop code here
 			time.Sleep(1 * time.Second)
 
-			state := ""
 			// translate state to string
-			switch s.state {
-			case types.ServerError:
-				state = "Error"
-			case types.ServerRunning:
-				state = "Running"
-			case types.ServerStarting:
-				state = "Starting"
-			case types.ServerStopping:
-				state = "Stopping"
-			case types.ServerStopped:
-				state = "Stopped"
-			case types.ServerUnknownState:
-				state = "Unknown"
-
-			}
+			state := stateToString(s)
 			// Write to log
 
 			s.logger.Printf("KV Server is %s", state)
 		}
 	}()
+}
+
+func stateToString(s *KVServer) string {
+	state := ""
+
+	switch s.state {
+	case types.ServerError:
+		state = "Error"
+	case types.ServerRunning:
+		state = "Running"
+	case types.ServerStarting:
+		state = "Starting"
+	case types.ServerStopping:
+		state = "Stopping"
+	case types.ServerStopped:
+		state = "Stopped"
+	case types.ServerUnknownState:
+		state = "Unknown"
+
+	}
+	return state
 }
 
 // Stop - A function that stops the KV Server
@@ -84,4 +95,12 @@ func (s *KVServer) Stop() {
 	// Write to log
 	s.state = types.ServerStopped
 	s.logger.Println("KV Server Stopped")
+}
+
+// GetStatus - A function that returns the status of the KV Server
+func (s *KVServer) GetStatus() (interface{}, error) {
+	// TODO - Return the status of the KV Server here
+	status := make(map[string]string)
+	status["state"] = stateToString(s)
+	return status, nil
 }

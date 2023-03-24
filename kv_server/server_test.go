@@ -44,7 +44,7 @@ func TestKVServerStates(t *testing.T) {
 	svr.Start()
 
 	// sleep for 17 seconds to allow server to start
-	time.Sleep(17 * time.Second)
+	time.Sleep(12 * time.Second)
 
 	// Assert that server is in the correct state
 	if svr.state != types.ServerRunning {
@@ -55,7 +55,7 @@ func TestKVServerStates(t *testing.T) {
 	svr.Stop()
 
 	// sleep for 17 seconds to allow server to stop
-	time.Sleep(17 * time.Second)
+	time.Sleep(12 * time.Second)
 
 	// Assert that server is in the correct state
 	if svr.state != types.ServerStopped {
