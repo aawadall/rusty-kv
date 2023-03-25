@@ -59,10 +59,10 @@ func (s *KVServer) Start() {
 			time.Sleep(1 * time.Second)
 
 			// translate state to string
-			state := stateToString(s)
+			//state := stateToString(s)
 			// Write to log
 
-			s.logger.Printf("KV Server is %s", state)
+			//s.logger.Printf("KV Server is %s", state)
 		}
 		wg.Done()
 	}()

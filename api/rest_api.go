@@ -6,12 +6,14 @@ import (
 	"os"
 
 	"github.com/aawadall/simple-kv/types"
+	"github.com/gorilla/mux"
 )
 
 // REST API for the application
 type RestApi struct {
 	logger *log.Logger
 	server types.Server
+	router *mux.Router
 }
 
 // NewRestApi creates a new REST API
@@ -20,6 +22,7 @@ func NewRestApi(server types.Server) *RestApi {
 	return &RestApi{
 		logger: log.New(os.Stdout, "RestApi ", log.LstdFlags),
 		server: server,
+		router: mux.NewRouter(),
 	}
 }
 
@@ -37,9 +40,24 @@ func (api *RestApi) Stop() {
 // handle requests
 func (api *RestApi) handleRequest() {
 	// Server Router
-	http.HandleFunc("/api/server/status", api.handleStatus)
-	http.HandleFunc("/api/server/start", api.handleStart)
-	http.HandleFunc("/api/server/stop", api.handleStop)
+	api.router.HandleFunc("/api/server/status", api.handleStatus)
+	api.router.HandleFunc("/api/server/start", api.handleStart)
+	api.router.HandleFunc("/api/server/stop", api.handleStop)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// KV Router
+	api.router.HandleFunc("/api/kv/{key}", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			api.handleGet(w, r)
+		case "POST":
+			api.handleSet(w, r)
+		case "DELETE":
+			api.handleDelete(w, r)
+		default:
+			api.logger.Println("Invalid method")
+			http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		}
+	})
+
+	log.Fatal(http.ListenAndServe(":8080", api.router))
 }
