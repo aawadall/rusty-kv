@@ -178,7 +178,14 @@ func (api *RestApi) handleDelete(w http.ResponseWriter, r *http.Request) {
 func (api *RestApi) handleSetMetadata(w http.ResponseWriter, r *http.Request) {
 	api.logger.Println("Handling set metadata request")
 	// Get key from request
-	key := r.URL.Query().Get("key")
+	vars := mux.Vars(r)
+	key, ok := vars["key"]
+	if !ok {
+		api.logger.Println("No key provided")
+		http.Error(w, "No key provided", http.StatusBadRequest)
+		return
+	}
+
 	if key == "" {
 		api.logger.Println("No key provided")
 		http.Error(w, "No key provided", http.StatusBadRequest)
@@ -186,7 +193,15 @@ func (api *RestApi) handleSetMetadata(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get metadata key from request
-	metadataKey := r.URL.Query().Get("metadataKey")
+	metadataKey, ok := vars["metadataKey"]
+
+	if !ok {
+		api.logger.Println("No metadata key provided")
+		http.Error(w, "No metadata key provided", http.StatusBadRequest)
+		return
+	}
+
+
 	if metadataKey == "" {
 		api.logger.Println("No metadata key provided")
 		http.Error(w, "No metadata key provided", http.StatusBadRequest)
@@ -194,15 +209,20 @@ func (api *RestApi) handleSetMetadata(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get metadata value from request
-	metadataValue := r.URL.Query().Get("metadataValue")
-	if metadataValue == "" {
+	metadataValue := r.Body
+	if metadataValue == nil {
 		api.logger.Println("No metadata value provided")
 		http.Error(w, "No metadata value provided", http.StatusBadRequest)
 		return
 	}
 
+	// convert metadata value to string
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(metadataValue)
+	metadataValueString := buf.String()
+
 	// Set metadata in server
-	err := api.server.SetMetadata(key, metadataKey, metadataValue)
+	err := api.server.SetMetadata(key, metadataKey, metadataValueString)
 	if err != nil {
 		api.logger.Println("Error setting metadata in server")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -219,7 +239,14 @@ func (api *RestApi) handleSetMetadata(w http.ResponseWriter, r *http.Request) {
 func (api *RestApi) handleGetMetadata(w http.ResponseWriter, r *http.Request) {
 	api.logger.Println("Handling get metadata request")
 	// Get key from request
-	key := r.URL.Query().Get("key")
+	vars := mux.Vars(r)
+	key, ok := vars["key"]
+	if !ok {
+		api.logger.Println("No key provided")
+		http.Error(w, "No key provided", http.StatusBadRequest)
+		return
+	}
+
 	if key == "" {
 		api.logger.Println("No key provided")
 		http.Error(w, "No key provided", http.StatusBadRequest)
@@ -227,7 +254,15 @@ func (api *RestApi) handleGetMetadata(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get metadata key from request
-	metadataKey := r.URL.Query().Get("metadataKey")
+	metadataKey, ok := vars["metadataKey"]
+
+	if !ok {
+		api.logger.Println("No metadata key provided")
+		http.Error(w, "No metadata key provided", http.StatusBadRequest)
+		return
+	}
+
+
 	if metadataKey == "" {
 		api.logger.Println("No metadata key provided")
 		http.Error(w, "No metadata key provided", http.StatusBadRequest)
@@ -242,17 +277,28 @@ func (api *RestApi) handleGetMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// convert metadata to bytes
+	metadataBytes := []byte(metadata)
+	metadataString := string(metadataBytes)
+
 	// Write metadata to response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(metadata)
+	json.NewEncoder(w).Encode(metadataString)
 }
 
 // handle DeleteMetadata(key string, metadataKey string) error
 func (api *RestApi) handleDeleteMetadata(w http.ResponseWriter, r *http.Request) {
 	api.logger.Println("Handling delete metadata request")
 	// Get key from request
-	key := r.URL.Query().Get("key")
+	vars := mux.Vars(r)
+	key, ok := vars["key"]
+	if !ok {
+		api.logger.Println("No key provided")
+		http.Error(w, "No key provided", http.StatusBadRequest)
+		return
+	}
+
 	if key == "" {
 		api.logger.Println("No key provided")
 		http.Error(w, "No key provided", http.StatusBadRequest)
@@ -260,7 +306,14 @@ func (api *RestApi) handleDeleteMetadata(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Get metadata key from request
-	metadataKey := r.URL.Query().Get("metadataKey")
+	metadataKey, ok := vars["metadataKey"]
+
+	if !ok {
+		api.logger.Println("No metadata key provided")
+		http.Error(w, "No metadata key provided", http.StatusBadRequest)
+		return
+	}
+
 	if metadataKey == "" {
 		api.logger.Println("No metadata key provided")
 		http.Error(w, "No metadata key provided", http.StatusBadRequest)
@@ -285,7 +338,14 @@ func (api *RestApi) handleDeleteMetadata(w http.ResponseWriter, r *http.Request)
 func (api *RestApi) handleGetAllMetadata(w http.ResponseWriter, r *http.Request) {
 	api.logger.Println("Handling get all metadata request")
 	// Get key from request
-	key := r.URL.Query().Get("key")
+	vars := mux.Vars(r)
+	key, ok := vars["key"]
+	if !ok {
+		api.logger.Println("No key provided")
+		http.Error(w, "No key provided", http.StatusBadRequest)
+		return
+	}
+
 	if key == "" {
 		api.logger.Println("No key provided")
 		http.Error(w, "No key provided", http.StatusBadRequest)
@@ -310,7 +370,14 @@ func (api *RestApi) handleGetAllMetadata(w http.ResponseWriter, r *http.Request)
 func (api *RestApi) handleFind(w http.ResponseWriter, r *http.Request) {
 	api.logger.Println("Handling find request")
 	// Get partial key from request
-	partialKey := r.URL.Query().Get("partialKey")
+	vars := mux.Vars(r)
+	partialKey, ok := vars["partialKey"]
+	if !ok {
+		api.logger.Println("No partial key provided")
+		http.Error(w, "No partial key provided", http.StatusBadRequest)
+		return
+	}
+
 	if partialKey == "" {
 		api.logger.Println("No partial key provided")
 		http.Error(w, "No partial key provided", http.StatusBadRequest)
@@ -335,7 +402,13 @@ func (api *RestApi) handleFind(w http.ResponseWriter, r *http.Request) {
 func (api *RestApi) handleFindByMetadata(w http.ResponseWriter, r *http.Request) {
 	api.logger.Println("Handling find by metadata request")
 	// Get query from request
-	query := r.URL.Query().Get("query")
+	vars := mux.Vars(r)
+	query, ok := vars["query"]
+	if !ok {
+		api.logger.Println("No query provided")
+		http.Error(w, "No query provided", http.StatusBadRequest)
+		return
+	}
 	if query == "" {
 		api.logger.Println("No query provided")
 		http.Error(w, "No query provided", http.StatusBadRequest)

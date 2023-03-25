@@ -100,7 +100,14 @@ func (s *KVServer) SetMetadata(key string, metadataKey string, metadataValue str
 
 	// otherwise set the metadata
 	record := s.Records[key]
-	record.SetMetadata(metadataKey, metadataValue)
+	newVer, err := record.SetMetadata(metadataKey, metadataValue)
+
+	if err != nil {
+		return err
+	}
+
+	// update version
+	record.SetMetadata("Version", fmt.Sprintf("%d", newVer))
 
 	return nil
 }
