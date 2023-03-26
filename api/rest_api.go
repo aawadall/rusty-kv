@@ -39,6 +39,23 @@ func (api *RestApi) Stop() {
 
 // handle requests
 func (api *RestApi) handleRequest() {
+	// router
+	api.routeHander()
+
+	// check if REST_PORT is set
+	var address string
+	if port, ok := os.LookupEnv("KV_SERVER_PORT"); ok {
+		address = ":" + port
+	} else {
+		address = ":8080"
+	}
+
+	// Start the server
+	log.Fatal(http.ListenAndServe(address, api.router))
+}
+
+// refactor routes
+func (api *RestApi) routeHander() error {
 	// Server Router
 	api.router.HandleFunc("/api/server/status", api.handleStatus)
 	api.router.HandleFunc("/api/server/start", api.handleStart)
@@ -80,5 +97,6 @@ func (api *RestApi) handleRequest() {
 	// Search Router
 	api.router.HandleFunc("/api/kv/search/{partialKey}", api.handleFind)
 	api.router.HandleFunc("/api/kv/search/metadata/{query}", api.handleFindByMetadata)
-	log.Fatal(http.ListenAndServe(":8080", api.router))
+
+	return nil
 }

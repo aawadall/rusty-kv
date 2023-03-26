@@ -1,0 +1,12 @@
+version: '3.7'
+services:
+  kv_server:
+    build: .
+    
+    ports:
+      - "5000:5000"
+    environment:
+      - "KV_SERVER_PORT=5000"
+      - "KV_SERVER_REPLICAS=1"
+      - "KV_SERVER_REPLICA_ID=0"
+      - "KV_SERVER_REPLICA_HOSTS=kv_server"
