@@ -54,7 +54,7 @@ func (c *Container) FindByMetadata(query string) []string {
 	defer c.mu.Unlock()
 	var keys []string
 	for key, record := range c.Records {
-		if record.Metadata[query] != "" {
+		if _, found := record.Metadata.Get(query); found {
 			keys = append(keys, key)
 		}
 	}
@@ -68,7 +68,7 @@ func (c *Container) GetMetadata(key string, metadataKey string) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	metadata, ok := record.Metadata[metadataKey]
+	metadata, ok := record.Metadata.Get(metadataKey)
 	return metadata, ok
 }
 
@@ -76,7 +76,7 @@ func (c *Container) SetMetadata(key string, metadataKey string, metadataValue st
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	record := c.Records[key]
-	record.Metadata[metadataKey] = metadataValue
+	record.Metadata.Set(metadataKey, metadataValue)
 	c.Records[key] = record
 }
 
@@ -84,7 +84,7 @@ func (c *Container) DeleteMetadata(key string, metadataKey string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	record := c.Records[key]
-	delete(record.Metadata, metadataKey)
+	record.Metadata.Delete(metadataKey)
 	c.Records[key] = record
 }
 
@@ -92,7 +92,7 @@ func (c *Container) GetAllMetadata(key string) map[string]string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	record := c.Records[key]
-	return record.Metadata
+	return record.Metadata.GetAll()
 }
 
 func (c *Container) List() []string {
@@ -117,14 +117,14 @@ func refineRecords(records map[string]KVRecord, entryParts []string) (refinedRec
 	}
 
 	// get the key, operator and value
-	key := entryParts[0]
+	 key := entryParts[0]
 	operator := entryParts[1]
 	value := entryParts[2]
 
 	// loop through the records
 	for recordKey, record := range records {
 		// check if the key exists
-		if _, ok := record.Metadata[key]; !ok {
+		if _, found := record.Metadata.Get(key); !found {
 			delete(records, recordKey)
 			continue
 		}
@@ -135,7 +135,8 @@ func refineRecords(records map[string]KVRecord, entryParts []string) (refinedRec
 		}
 
 		// check if the value matches
-		if !matches(record.Metadata[key], operator, value) {
+		metadata, _ := record.Metadata.Get(key)
+		if !matches(metadata, operator, value) {
 			delete(records, recordKey)
 			continue
 		}

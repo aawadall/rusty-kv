@@ -135,12 +135,13 @@ func (s *KVServer) GetMetadata(key string, metadataKey string) (value string, er
 	}
 
 	// check if the metadata key is in the store
-	if _, ok := record.Metadata[metadataKey]; !ok {
+	metadata, ok := record.Metadata.Get(metadataKey)
+	if !ok {
 		return "", fmt.Errorf("metadata key not found")
 	}
 
 	// otherwise get the metadata
-	return record.GetMetadata(metadataKey)
+	return metadata, nil
 }
 
 // Delete Metadata
@@ -159,11 +160,6 @@ func (s *KVServer) DeleteMetadata(key string, metadataKey string) (err error) {
 	record, ok := s.Records.Get(key)
 	if !ok {
 		return fmt.Errorf("key not found")
-	}
-
-	// check if the metadata key is in the store
-	if _, ok := record.Metadata[metadataKey]; !ok {
-		return fmt.Errorf("metadata key not found")
 	}
 
 	// otherwise delete the metadata
