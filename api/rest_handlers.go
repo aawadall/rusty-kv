@@ -129,7 +129,10 @@ func (api *RestApi) handleSet(w http.ResponseWriter, r *http.Request) {
 	valueBytes := buf.Bytes()
 
 	// Set value in server
+	// for concurrency, we need to lock the record
+
 	err := api.server.Set(key, valueBytes)
+
 	if err != nil {
 		api.logger.Println("Error setting value in server")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -201,7 +204,6 @@ func (api *RestApi) handleSetMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	if metadataKey == "" {
 		api.logger.Println("No metadata key provided")
 		http.Error(w, "No metadata key provided", http.StatusBadRequest)
@@ -261,7 +263,6 @@ func (api *RestApi) handleGetMetadata(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No metadata key provided", http.StatusBadRequest)
 		return
 	}
-
 
 	if metadataKey == "" {
 		api.logger.Println("No metadata key provided")

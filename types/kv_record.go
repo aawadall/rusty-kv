@@ -130,6 +130,7 @@ func (r *KVRecord) ListMetadata() (metadata map[string]string, err error) {
 
 // Update Record
 func (r *KVRecord) UpdateRecord(key string, value []byte) (version int, err error) {
+
 	// if the key is empty return error
 	if key == "" {
 		return -1, fmt.Errorf("metadata `Key` cannot be empty")
