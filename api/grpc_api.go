@@ -21,13 +21,3 @@ func NewGrpcApi(server types.Server) *GrpcApi {
 		server: server,
 	}
 }
-
-// Start starts the gRPC API
-func (api *GrpcApi) Start() {
-	api.logger.Println("Starting gRPC API")
-}
-
-// Stop stops the gRPC API
-func (api *GrpcApi) Stop() {
-	api.logger.Println("Stopping gRPC API")
-}

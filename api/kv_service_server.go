@@ -35,3 +35,13 @@ func (GrpcApi) FindByMetadata(context.Context, *proto_api.FindByMetadataRequest)
 	return nil, status.Errorf(codes.Unimplemented, "method FindByMetadata not implemented")
 }
 func (GrpcApi) mustEmbedGrpcApi() {}
+
+func (GrpcApi) GetStatus(context.Context, *proto_api.GetStatusRequest) (*proto_api.GetStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
+}
+func (GrpcApi) Start(context.Context, *proto_api.StartRequest) (*proto_api.StartResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Start not implemented")
+}
+func (GrpcApi) Stop(context.Context, *proto_api.StopRequest) (*proto_api.StopResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Stop not implemented")
+}
