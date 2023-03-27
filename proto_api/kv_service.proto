@@ -1,8 +1,10 @@
 syntax = "proto3";
 
-package aawadall.simple_kv.proto_api;
+package proto_api;
 
-option go_package = "github.com/aawadall/simple-kv/proto/kv_service";
+import "common.proto";
+
+option go_package = "./proto_api";
 
 message KeyValueRecord {
     string key = 2;
@@ -88,7 +90,3 @@ message FindByMetadataResponse {
     repeated string records = 2;
 }
 
-message UniversalResponse {
-    bool success = 1;
-    string error = 2;
-}

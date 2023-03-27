@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package proto_api;
+
+import "common.proto";
+
+option go_package = "./proto_api";
+
+service ServerService {
+    rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {}
+    rpc Start (StartRequest) returns (StartResponse) {}
+    rpc Stop (StopRequest) returns (StopResponse) {}
+}
+
+message GetStatusRequest {
+}
+
+message GetStatusResponse {
+    UniversalResponse common_response = 1;
+    ServerStatus status = 2;
+}
+
+message ServerStatus {
+    string version = 1;
+    string status = 2;
+}
+
+message StartRequest {
+}
+
+message StartResponse {
+    UniversalResponse common_response = 1;
+}
+
+message StopRequest {
+}
+
+message StopResponse {
+    UniversalResponse common_response = 1;
+}
