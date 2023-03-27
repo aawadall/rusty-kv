@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package proto_api;
+
+import "common.proto";
+
+option go_package = "./proto_api";
+
+message KeyValueRecord {
+    string key = 2;
+    bytes value = 3;
+    map<string, string> metadata = 4;
+}
+
+service KeyValueService {
+    rpc Get (GetRequest) returns (KeyValueRecord) {}
+    rpc Set (SetRequest) returns (SetResponse) {}
+    rpc Delete (DeleteRequest) returns (DeleteResponse) {}
+    rpc SetMetadata (SetMetadataRequest) returns (SetMetadataResponse) {}
+    rpc DeleteMetadata (DeleteMetadataRequest) returns (DeleteMetadataResponse) {}
+    rpc GetAllMetadata (GetAllMetadataRequest) returns (GetAllMetadataResponse) {}
+    rpc Find(FindRequest) returns (FindResponse) {}
+    rpc FindByMetadata(FindByMetadataRequest) returns (FindByMetadataResponse) {}
+}
+
+message GetRequest {
+    string key = 1;
+}
+
+message SetRequest {
+    string key = 1;
+    bytes value = 2;
+}
+
+message SetResponse {
+    UniversalResponse response = 1;
+}
+
+message DeleteRequest {
+    string key = 1;
+}
+
+message DeleteResponse {
+    UniversalResponse response = 1;
+}
+
+message SetMetadataRequest {
+    string key = 1;
+    string metadata_key = 2;
+    string metadata_value = 3;
+}
+
+message SetMetadataResponse {
+    UniversalResponse response = 1;
+}
+
+message DeleteMetadataRequest {
+    string key = 1;
+    string metadata_key = 2;
+}
+
+message DeleteMetadataResponse {
+    UniversalResponse response = 1;
+}
+
+message GetAllMetadataRequest {
+    string key = 1;
+}
+
+message GetAllMetadataResponse {
+    UniversalResponse response = 1;
+    map<string, string> metadata = 2;
+}
+
+message FindRequest {
+    string partial_key = 1;
+}
+
+message FindResponse {
+    UniversalResponse response = 1;
+    repeated string records = 2;
+}
+
+message FindByMetadataRequest {
+    string query = 1;
+}
+
+message FindByMetadataResponse {
+    UniversalResponse response = 1;
+    repeated string records = 2;
+}
+

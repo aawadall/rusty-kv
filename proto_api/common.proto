@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package proto_api;
+
+option go_package = "./proto_api";
+
+message UniversalResponse {
+    bool success = 1;
+    string error = 2;
+}
