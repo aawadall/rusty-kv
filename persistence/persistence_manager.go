@@ -38,3 +38,23 @@ func (pm *PersistenceManager) Stop() {
 	// TODO: implement
 	pm.logger.Println("Stopping Persistence Manager")
 }
+
+// Write - write a record to disk
+func (pm *PersistenceManager) Write(record KvRecord) error {
+	return pm.driver.Write(record)
+}
+
+// Read - read a record from disk
+func (pm *PersistenceManager) Read(key string) (KvRecord, error) {
+	return pm.driver.Read(key)
+}
+
+// Compare - compare a record to disk
+func (pm *PersistenceManager) Compare(record KvRecord) (bool, error) {
+	return pm.driver.Compare(record)
+}
+
+// Load - load all records from disk
+func (pm *PersistenceManager) Load() ([]KvRecord, error) {
+	return pm.driver.Load()
+}
