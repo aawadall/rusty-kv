@@ -55,6 +55,26 @@ func (s *KVServer) Start() {
 	go func() {
 		s.state = types.ServerStarting
 
+		// Load the data from the persistence layer
+		records, err := s.persistence.Load()
+
+		if err != nil {
+			s.logger.Printf("Error loading data from persistence layer: %v", err)
+			s.state = types.ServerError
+			wg.Done()
+			return
+		}
+
+		// Add the records to the container
+		err = s.Records.BulkLoad(records)
+
+		if err != nil {
+			s.logger.Printf("Error loading data from persistence layer: %v", err)
+			s.state = types.ServerError
+			wg.Done()
+			return
+		}
+
 		// Start the REST API
 		s.rest.Start()
 
@@ -105,8 +125,8 @@ func (s *KVServer) Stop() {
 	s.state = types.ServerStopping
 	// TODO - Stop the KV Server here
 	s.rest.Stop()
-	// Sleep for a bit to simulate real stopping
-	time.Sleep(5 * time.Second)
+	// Save the data to the persistence layer
+	s.persistence.Save(s.Records.GetAll())
 
 	// Write to log
 	s.state = types.ServerStopped

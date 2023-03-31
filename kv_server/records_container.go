@@ -105,6 +105,25 @@ func (c *Container) List() []string {
 	return keys
 }
 
+func (c *Container) BulkLoad(records []KVRecord) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, record := range records {
+		c.Records[record.Key] = record
+	}
+	return nil
+}
+
+func (c *Container) GetAll() []KVRecord {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var records []KVRecord
+	for _, record := range c.Records {
+		records = append(records, record)
+	}
+	return records
+}
+
 // Helper Functions
 func contains(s, substr string) bool {
 	return strings.Contains(s, substr)
@@ -117,7 +136,7 @@ func refineRecords(records map[string]KVRecord, entryParts []string) (refinedRec
 	}
 
 	// get the key, operator and value
-	 key := entryParts[0]
+	key := entryParts[0]
 	operator := entryParts[1]
 	value := entryParts[2]
 

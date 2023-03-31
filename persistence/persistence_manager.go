@@ -67,3 +67,14 @@ func (pm *PersistenceManager) Compare(record KvRecord) (bool, error) {
 func (pm *PersistenceManager) Load() ([]KvRecord, error) {
 	return pm.driver.Load()
 }
+
+// Save - save all records to disk
+func (pm *PersistenceManager) Save(records []KvRecord) error {
+	for _, record := range records {
+		err := pm.driver.Write(record)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
