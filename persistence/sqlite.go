@@ -2,12 +2,27 @@ package persistence
 
 // SQLiteDatabaseDriver - sqlite database driver
 
+import (
+	_ "github.com/mattn/go-sqlite3"
+)
+
 type SQLiteDatabaseDriver struct {
+	dbLocation string
 }
 
 // NewSQLiteDatabaseDriver - create a new sqlite database driver
-func NewSQLiteDatabaseDriver() *SQLiteDatabaseDriver {
-	return &SQLiteDatabaseDriver{}
+func NewSQLiteDatabaseDriver(dbLocation string) *SQLiteDatabaseDriver {
+	driver := &SQLiteDatabaseDriver{
+		dbLocation: dbLocation,
+	}
+
+	driver.init()
+	return driver
+}
+
+// init - initialize the sqlite database driver
+func (ff *SQLiteDatabaseDriver) init() {
+	// TODO: implement
 }
 
 // Write - write a record to disk
