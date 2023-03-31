@@ -4,6 +4,7 @@ package persistence
 
 import (
 	"database/sql"
+	"log"
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -12,14 +13,17 @@ import (
 type SQLiteDatabaseDriver struct {
 	dbLocation string
 	db         *sql.DB
+	logger     *log.Logger
 }
 
 // NewSQLiteDatabaseDriver - create a new sqlite database driver
 func NewSQLiteDatabaseDriver(dbLocation string) *SQLiteDatabaseDriver {
 	driver := &SQLiteDatabaseDriver{
 		dbLocation: dbLocation,
+		logger:     log.New(os.Stdout, "sqlite: ", log.LstdFlags),
 	}
 
+	driver.logger.Printf("Creating SQLite Database Driver with location: %v", dbLocation)
 	// initialize the driver
 	driver.init()
 
@@ -28,6 +32,7 @@ func NewSQLiteDatabaseDriver(dbLocation string) *SQLiteDatabaseDriver {
 
 // init - initialize the sqlite database driver
 func (ff *SQLiteDatabaseDriver) init() {
+	ff.logger.Printf("Initializing SQLite Database Driver with location: %v", ff.dbLocation)
 	// TODO: implement
 	var file *os.File
 	// 1. Check if the database exists

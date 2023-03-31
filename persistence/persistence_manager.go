@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"fmt"
 	"log"
 	"os"
 )
@@ -12,16 +13,17 @@ type PersistenceManager struct {
 }
 
 // NewPersistenceManager - create a new persistence manager
-func NewPersistenceManager(config map[string]string) *PersistenceManager {
+func NewPersistenceManager(config map[string]interface{}) *PersistenceManager {
 	pm := &PersistenceManager{
 		logger: log.New(os.Stdout, "persistence: ", log.LstdFlags),
 	}
 
+	pm.logger.Printf("Creating Persistence Manager with driver: %v", config["driver"])
 	switch config["driver"] {
 	case "flat_file":
 		pm.driver = NewFlatFileDriver()
 	case "sqlite":
-		pm.driver = NewSQLiteDatabaseDriver(config["db_location"])
+		pm.driver = NewSQLiteDatabaseDriver(fmt.Sprintf("%v", config["db_location"]))
 	default:
 		pm.driver = NewFlatFileDriver()
 	}

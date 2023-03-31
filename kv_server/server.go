@@ -7,6 +7,7 @@ import (
 
 	"github.com/aawadall/simple-kv/api"
 	"github.com/aawadall/simple-kv/config"
+	"github.com/aawadall/simple-kv/persistence"
 	"github.com/aawadall/simple-kv/types"
 )
 
@@ -18,11 +19,12 @@ type ServerState = types.ServerState
 type KVServer struct {
 	// TODO - Add fields here
 	//Records map[string]KVRecord
-	Records *Container
-	logger  *log.Logger
-	state   ServerState
-	config  *config.ConfigurationManager
-	rest    *api.RestApi
+	Records     *Container
+	logger      *log.Logger
+	state       ServerState
+	config      *config.ConfigurationManager
+	rest        *api.RestApi
+	persistence *persistence.PersistenceManager
 }
 
 // NewKVServer - A function that creates a new KV Server
@@ -31,10 +33,14 @@ func NewKVServer() *KVServer {
 		//Records: make(map[string]KVRecord),
 		Records: NewContainer(),
 		logger:  log.New(log.Writer(), "KVServer", log.LstdFlags),
-		config:  config.NewConfigurationManager(),
-		state:   types.ServerUnknownState,
+		config: config.NewConfigurationManager(map[string]string{
+			"driver":      "sqlite",
+			"db_location": "kv.db",
+		}),
+		state: types.ServerUnknownState,
 	}
 	server.rest = api.NewRestApi(server)
+	server.persistence = persistence.NewPersistenceManager(server.config.GetConfig())
 
 	return server
 }

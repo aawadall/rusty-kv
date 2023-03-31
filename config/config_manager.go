@@ -15,11 +15,16 @@ type ConfigurationManager struct {
 }
 
 // NewConfigurationManager - A function that creates a new Configuration Manager
-func NewConfigurationManager() *ConfigurationManager {
+func NewConfigurationManager(configMap map[string]string) *ConfigurationManager {
 	cfg := &ConfigurationManager{
 		Configuration: make(map[string]interface{}),
 		logger:        log.New(os.Stdout, "CONFIG: ", log.LstdFlags),
 	}
+	// append configuration from configMap
+	for key, value := range configMap {
+		cfg.Configuration[key] = value
+	}
+
 	cfg.logger.Println("Configuration Manager created")
 	cfg.LoadFromEnvironment()
 	return cfg
@@ -83,6 +88,11 @@ func (c *ConfigurationManager) LoadFromEnvironment() (err error) {
 	}
 
 	return nil
+}
+
+// GetConfig - A function that gets all configuration
+func (c *ConfigurationManager) GetConfig() map[string]interface{} {
+	return c.Configuration
 }
 
 // Helper Functions
