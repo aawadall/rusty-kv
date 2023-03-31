@@ -20,6 +20,8 @@ func NewPersistenceManager(config map[string]string) *PersistenceManager {
 	switch config["driver"] {
 	case "flat_file":
 		pm.driver = NewFlatFileDriver()
+	case "sqlite":
+		pm.driver = NewSQLiteDatabaseDriver(config["db_location"])
 	default:
 		pm.driver = NewFlatFileDriver()
 	}
@@ -47,6 +49,11 @@ func (pm *PersistenceManager) Write(record KvRecord) error {
 // Read - read a record from disk
 func (pm *PersistenceManager) Read(key string) (KvRecord, error) {
 	return pm.driver.Read(key)
+}
+
+// Delete - delete a record from disk
+func (pm *PersistenceManager) Delete(key string) error {
+	return pm.driver.Delete(key)
 }
 
 // Compare - compare a record to disk

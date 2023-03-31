@@ -9,6 +9,7 @@ type KvRecord = types.KVRecord
 type Driver interface {
 	Write(KvRecord) error
 	Read(string) (KvRecord, error)
+	Delete(string) error
 	Compare(KvRecord) (bool, error)
 	Load() ([]KvRecord, error)
 }
