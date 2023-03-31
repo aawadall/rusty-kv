@@ -70,11 +70,14 @@ func (pm *PersistenceManager) Load() ([]KvRecord, error) {
 
 // Save - save all records to disk
 func (pm *PersistenceManager) Save(records []KvRecord) error {
+	pm.logger.Println("Saving records to disk")
 	for _, record := range records {
+		pm.logger.Print(".")
 		err := pm.driver.Write(record)
 		if err != nil {
 			return err
 		}
 	}
+	pm.logger.Printf("Done saving %v records to disk", len(records))
 	return nil
 }

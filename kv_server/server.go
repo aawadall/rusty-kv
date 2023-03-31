@@ -35,7 +35,7 @@ func NewKVServer() *KVServer {
 		logger:  log.New(log.Writer(), "KVServer", log.LstdFlags),
 		config: config.NewConfigurationManager(map[string]string{
 			"driver":      "sqlite",
-			"db_location": "kv.db",
+			"db_location": "kv.sqlite",
 		}),
 		state: types.ServerUnknownState,
 	}

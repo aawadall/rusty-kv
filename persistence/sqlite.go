@@ -52,6 +52,7 @@ func (ff *SQLiteDatabaseDriver) init() {
 // Write - write a record to disk
 func (ff *SQLiteDatabaseDriver) Write(record KvRecord) error {
 	// TODO: implement
+	ff.logger.Printf("Writing record to SQLite Database Driver with key: %v", record.Key)
 	// 1. Insert the record
 	err := ff.insertRecord(record)
 	if err != nil {
@@ -68,6 +69,7 @@ func (ff *SQLiteDatabaseDriver) Write(record KvRecord) error {
 // Read - read a record from disk
 func (ff *SQLiteDatabaseDriver) Read(key string) (KvRecord, error) {
 	// TODO: implement
+	ff.logger.Printf("Reading record from SQLite Database Driver with key: %v", key)
 	if ff.findRecord(key) {
 		// 1. Get the record
 		record, err := ff.getRecord(key)
