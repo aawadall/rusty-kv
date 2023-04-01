@@ -2,6 +2,7 @@ package kvserver
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/aawadall/simple-kv/types"
 )
@@ -28,6 +29,9 @@ func (s *KVServer) Get(key string) (value interface{}, err error) {
 
 // Set - A function that sets a value in the KV Server
 func (s *KVServer) Set(key string, value interface{}) (err error) {
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
 	// check if the key is empty
 	if key == "" {
 		return fmt.Errorf("key cannot be empty")
@@ -42,6 +46,11 @@ func (s *KVServer) Set(key string, value interface{}) (err error) {
 	bValue := value.([]byte)
 
 	// check if the key is in the store
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		s.persistence.Write(*types.NewKVRecord(key, bValue))
+	}()
 	record, ok := s.Records.Get(key)
 	if !ok {
 		// if not, create a new record

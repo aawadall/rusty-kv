@@ -1,4 +1,4 @@
-package kvserver
+package types
 
 import (
 	"fmt"
@@ -109,6 +109,7 @@ func (c *Container) BulkLoad(records []KVRecord) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for _, record := range records {
+		fmt.Print(".")
 		c.Records[record.Key] = record
 	}
 	return nil

@@ -4,6 +4,7 @@ package persistence
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"os"
 
@@ -63,6 +64,7 @@ func (ff *SQLiteDatabaseDriver) Write(record KvRecord) error {
 	if err != nil {
 		return err
 	}
+	ff.logger.Printf("Wrote record to SQLite Database Driver with key: %v", record.Key)
 	return nil
 }
 
@@ -160,13 +162,22 @@ func (ff *SQLiteDatabaseDriver) initDatabase() {
 func (ff *SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
 	key := record.Key
 	value := record.Value
-
+	ff.logger.Printf("Inserting record into SQLite Database Driver with key: %v", key)
 	// upsert the record
 	query := `INSERT OR REPLACE INTO records (key, value) VALUES (?, ?);`
-	_, err := ff.db.Exec(query, key, value)
+	result, err := ff.db.Exec(query, key, value)
 	if err != nil {
 		return err
 	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.New("no rows affected")
+	}
+
+	ff.logger.Printf("Inserted record into SQLite Database Driver with key: %v", key)
 	return nil
 }
 
@@ -174,7 +185,7 @@ func (ff *SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
 func (ff *SQLiteDatabaseDriver) insertMetadata(record KvRecord) error {
 	key := record.Key
 	metadata := record.Metadata.GetAll()
-
+	ff.logger.Printf("Inserting metadata into SQLite Database Driver with key: %v", key)
 	// upsert the metadata
 	for k, v := range metadata {
 		query := `INSERT OR REPLACE INTO metadata (key, metadataKey, metadataValue) VALUES (?, ?, ?);`

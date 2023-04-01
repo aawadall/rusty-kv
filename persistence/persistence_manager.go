@@ -24,6 +24,8 @@ func NewPersistenceManager(config map[string]interface{}) *PersistenceManager {
 		pm.driver = NewFlatFileDriver()
 	case "sqlite":
 		pm.driver = NewSQLiteDatabaseDriver(fmt.Sprintf("%v", config["db_location"]))
+	case "mock":
+		pm.driver = NewMockDriver(fmt.Sprintf("%v", config["file_location"]))
 	default:
 		pm.driver = NewFlatFileDriver()
 	}
@@ -70,7 +72,7 @@ func (pm *PersistenceManager) Load() ([]KvRecord, error) {
 
 // Save - save all records to disk
 func (pm *PersistenceManager) Save(records []KvRecord) error {
-	pm.logger.Println("Saving records to disk")
+	pm.logger.Printf("Saving %v records to disk", len(records))
 	for _, record := range records {
 		pm.logger.Print(".")
 		err := pm.driver.Write(record)
@@ -79,5 +81,51 @@ func (pm *PersistenceManager) Save(records []KvRecord) error {
 		}
 	}
 	pm.logger.Printf("Done saving %v records to disk", len(records))
+	return nil
+}
+
+// Sync - sync all records to disk
+func (pm *PersistenceManager) Sync(records []KvRecord) error {
+	pm.logger.Println("Syncing records to disk")
+
+	// 1. Load all records from disk
+	diskRecords, err := pm.driver.Load()
+	if err != nil {
+		return err
+	}
+
+	// 2. Compare With records, find any records in diskRecords and not in records
+	delta := []string{}
+	for _, diskRecord := range diskRecords {
+		found := false
+		for _, record := range records {
+			if diskRecord.Key == record.Key {
+				found = true
+				break
+			}
+		}
+		if !found {
+			delta = append(delta, diskRecord.Key)
+		}
+	}
+
+	// 3. Delete any records that are not in With records
+	for _, key := range delta {
+		pm.logger.Printf("Deleting record: %v", key)
+		err := pm.driver.Delete(key)
+		if err != nil {
+			return err
+		}
+	}
+
+	// 4. Write All records from records
+	for _, record := range records {
+		pm.logger.Printf("Writing record: %v", record.Key)
+		err := pm.driver.Write(record)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

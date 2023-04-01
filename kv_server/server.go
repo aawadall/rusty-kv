@@ -1,7 +1,9 @@
 package kvserver
 
 import (
+	"fmt"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -19,7 +21,7 @@ type ServerState = types.ServerState
 type KVServer struct {
 	// TODO - Add fields here
 	//Records map[string]KVRecord
-	Records     *Container
+	Records     *types.Container
 	logger      *log.Logger
 	state       ServerState
 	config      *config.ConfigurationManager
@@ -28,16 +30,13 @@ type KVServer struct {
 }
 
 // NewKVServer - A function that creates a new KV Server
-func NewKVServer() *KVServer {
+func NewKVServer(configuration map[string]string) *KVServer {
 	server := &KVServer{
 		//Records: make(map[string]KVRecord),
-		Records: NewContainer(),
+		Records: types.NewContainer(),
 		logger:  log.New(log.Writer(), "KVServer", log.LstdFlags),
-		config: config.NewConfigurationManager(map[string]string{
-			"driver":      "sqlite",
-			"db_location": "kv.sqlite",
-		}),
-		state: types.ServerUnknownState,
+		config:  config.NewConfigurationManager(configuration),
+		state:   types.ServerUnknownState,
 	}
 	server.rest = api.NewRestApi(server)
 	server.persistence = persistence.NewPersistenceManager(server.config.GetConfig())
@@ -66,6 +65,7 @@ func (s *KVServer) Start() {
 		}
 
 		// Add the records to the container
+		s.logger.Printf("Loading %d records from persistence layer", len(records))
 		err = s.Records.BulkLoad(records)
 
 		if err != nil {
@@ -81,11 +81,24 @@ func (s *KVServer) Start() {
 		// TODO - Start the KV Server here
 
 		s.state = types.ServerRunning
+		iSyncInterval, err := s.config.Get("sync_interval")
+		if err != nil {
+			iSyncInterval = "10"
+		}
+
+		sSyncInterval := fmt.Sprintf("%s", iSyncInterval)
+
+		// get int value from sSyncInterval
+		syncInterval, err := strconv.Atoi(sSyncInterval)
+
 		for s.state != types.ServerStopped &&
 			s.state != types.ServerError {
 			// TODO - Event loop code here
-			time.Sleep(1 * time.Second)
+			time.Sleep(time.Duration(syncInterval) * time.Second)
 
+			go func() {
+				s.persistence.Sync(s.Records.GetAll())
+			}()
 			// translate state to string
 			//state := stateToString(s)
 			// Write to log
@@ -124,9 +137,21 @@ func (s *KVServer) Stop() {
 	s.logger.Println("KV Server Stopping")
 	s.state = types.ServerStopping
 	// TODO - Stop the KV Server here
-	s.rest.Stop()
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+	wg.Add(1)
+	go func() {
+		defer s.logger.Println("Stopped REST API")
+		s.rest.Stop()
+		wg.Done()
+	}()
 	// Save the data to the persistence layer
-	s.persistence.Save(s.Records.GetAll())
+	wg.Add(1)
+	go func() {
+		defer s.logger.Println("Saved data to persistence layer")
+		s.persistence.Save(s.Records.GetAll())
+		wg.Done()
+	}()
 
 	// Write to log
 	s.state = types.ServerStopped

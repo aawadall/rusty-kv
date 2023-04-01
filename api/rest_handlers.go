@@ -41,8 +41,9 @@ func (api *RestApi) handleStart(w http.ResponseWriter, r *http.Request) {
 func (api *RestApi) handleStop(w http.ResponseWriter, r *http.Request) {
 	api.logger.Println("Handling stop request")
 	// Stop server
-	api.server.Stop()
-
+	go func() {
+		api.server.Stop()
+	}()
 	// Write status to response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

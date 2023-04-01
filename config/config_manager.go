@@ -82,7 +82,6 @@ func (c *ConfigurationManager) LoadFromEnvironment() (err error) {
 	for _, envVar := range envVars {
 		// Split the environment variable into key and value
 		key, value := splitEnvVar(envVar)
-		c.logger.Printf("Loading configuration `%s` with value `%s`", key, value)
 		// Set the configuration
 		c.Set(key, value)
 	}
