@@ -26,6 +26,8 @@ func NewPersistenceManager(config map[string]interface{}) *PersistenceManager {
 		pm.driver = NewSQLiteDatabaseDriver(fmt.Sprintf("%v", config["db_location"]))
 	case "mock":
 		pm.driver = NewMockDriver(fmt.Sprintf("%v", config["file_location"]))
+	case "none":
+		pm.driver = NewNoPersistence()
 	default:
 		pm.driver = NewFlatFileDriver()
 	}

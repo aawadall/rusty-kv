@@ -8,9 +8,9 @@ func main() {
 	// TODO - Entry point code  here
 	// define server
 	config := map[string]string{
-		"driver":        "mock",
+		"driver":        "none",
 		"file_location": "log.txt",
-		"sync_interval": "5",
+		"sync_interval": "120",
 	}
 	server := kvserver.NewKVServer(config)
 
