@@ -63,6 +63,7 @@ func (api *RestApi) routeHander() error {
 
 	// KV Router
 	api.router.HandleFunc("/api/kv/{key}", func(w http.ResponseWriter, r *http.Request) {
+		api.logger.Printf("Request: %v %s", r.Method, r.URL.Path)
 		switch r.Method {
 		case "GET":
 			api.handleGet(w, r)

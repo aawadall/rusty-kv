@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 )
@@ -115,7 +116,8 @@ func (c *Container) BulkLoad(records []KVRecord) error {
 	return nil
 }
 
-func (c *Container) GetAll() []KVRecord {
+func (c *Container) GetAll(logger *log.Logger) []KVRecord {
+	logger.Printf("GetAll() called")
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	var records []KVRecord

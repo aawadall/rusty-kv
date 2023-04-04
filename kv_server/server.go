@@ -97,7 +97,7 @@ func (s *KVServer) Start() {
 			time.Sleep(time.Duration(syncInterval) * time.Second)
 
 			go func() {
-				s.persistence.Sync(s.Records.GetAll())
+				s.persistence.Sync(s.Records.GetAll(s.logger))
 			}()
 			// translate state to string
 			//state := stateToString(s)
@@ -149,7 +149,7 @@ func (s *KVServer) Stop() {
 	wg.Add(1)
 	go func() {
 		defer s.logger.Println("Saved data to persistence layer")
-		s.persistence.Save(s.Records.GetAll())
+		s.persistence.Sync(s.Records.GetAll(s.logger))
 		wg.Done()
 	}()
 

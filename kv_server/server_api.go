@@ -70,6 +70,7 @@ func (s *KVServer) Set(key string, value interface{}) (err error) {
 // Delete - A function that deletes a value from the KV Server
 func (s *KVServer) Delete(key string) (err error) {
 	// check if the key is empty
+	wg := &sync.WaitGroup{}
 	if key == "" {
 		return fmt.Errorf("key cannot be empty")
 	}
@@ -80,6 +81,13 @@ func (s *KVServer) Delete(key string) (err error) {
 		return fmt.Errorf("key not found")
 	}
 
+	// delete @ persistence
+	defer wg.Wait()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		s.persistence.Delete(key)
+	}()
 	// otherwise delete the record
 	s.Records.Delete(key)
 
