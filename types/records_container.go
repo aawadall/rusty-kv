@@ -113,6 +113,7 @@ func (c *Container) BulkLoad(records []KVRecord) error {
 		fmt.Print(".")
 		c.Records[record.Key] = record
 	}
+	
 	return nil
 }
 

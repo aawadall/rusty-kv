@@ -75,6 +75,20 @@ func (s *KVServer) Start() {
 			return
 		}
 
+		s.logger.Printf("Loaded %d records from persistence layer", len(records))
+
+		// DEBUG - inspect records
+		for i, record := range s.Records.GetAll(s.logger) {
+			s.logger.Printf("[%d] Record Key: %v", i, record.Key)
+			// print values
+			for k, v := range record.Value.Value {
+				s.logger.Printf("[%d] Record Value Key: %v, Value: %v", i, k, v)
+			}
+			// print metadata
+			for k, v := range record.Metadata.GetAll() {
+				s.logger.Printf("[%d] Record Metadata Key: %v, Value: %v", i, k, v)
+			}
+		}
 		// Start the REST API
 		s.rest.Start()
 
@@ -155,7 +169,14 @@ func (s *KVServer) Stop() {
 
 	// Write to log
 	s.state = types.ServerStopped
-	s.logger.Println("KV Server Stopped")
+	defer s.logger.Println("KV Server Stopped")
+
+	s.logger.Println("Waiting for last sync to complete")
+	for s.state != types.ServerStopped {
+		s.logger.Print(".")
+		time.Sleep(1 * time.Second)
+	}
+
 }
 
 // GetStatus - A function that returns the status of the KV Server
