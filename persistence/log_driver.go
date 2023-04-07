@@ -9,13 +9,13 @@ import (
 )
 
 // Mock Driver, writes Records to a flat file as log operations
-type MockDriver struct {
+type LogDriver struct {
 	logFileName string
 }
 
-// NewMockDriver - create a new mock driver
-func NewMockDriver(logFileName string) *MockDriver {
-	driver := &MockDriver{
+// NewLogDriver - create a new mock driver
+func NewLogDriver(logFileName string) *LogDriver {
+	driver := &LogDriver{
 		logFileName: logFileName,
 	}
 	initFile(driver.logFileName)
@@ -25,7 +25,7 @@ func NewMockDriver(logFileName string) *MockDriver {
 // implement Driver interface
 
 // Write - write a record to disk
-func (ff *MockDriver) Write(record KvRecord) error {
+func (ff *LogDriver) Write(record KvRecord) error {
 	// Open file for appending
 	f, err := os.OpenFile(ff.logFileName, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
@@ -42,7 +42,7 @@ func (ff *MockDriver) Write(record KvRecord) error {
 }
 
 // Read - read a record from disk
-func (ff *MockDriver) Read(key string) (KvRecord, error) {
+func (ff *LogDriver) Read(key string) (KvRecord, error) {
 	// Makeup a record
 	blob := []byte("mock blob")
 	valuesContainer := types.NewValuesContainer()
@@ -55,7 +55,7 @@ func (ff *MockDriver) Read(key string) (KvRecord, error) {
 }
 
 // Delete - delete a record from disk
-func (ff *MockDriver) Delete(key string) error {
+func (ff *LogDriver) Delete(key string) error {
 	// Open file for appending
 	f, err := os.OpenFile(ff.logFileName, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
@@ -72,14 +72,14 @@ func (ff *MockDriver) Delete(key string) error {
 }
 
 // Compare - compare a record to disk
-func (ff *MockDriver) Compare(record KvRecord) (bool, error) {
+func (ff *LogDriver) Compare(record KvRecord) (bool, error) {
 	// Random Comparison
 	comparison := rand.Intn(2) == 0
 	return comparison, nil
 }
 
 // Load - load all records from disk
-func (ff *MockDriver) Load() ([]KvRecord, error) {
+func (ff *LogDriver) Load() ([]KvRecord, error) {
 	// Return mock records
 	return makeRecords(10), nil
 }

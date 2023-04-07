@@ -25,9 +25,11 @@ func NewPersistenceManager(config map[string]interface{}) *PersistenceManager {
 	case "sqlite":
 		pm.driver = NewSQLiteDatabaseDriver(fmt.Sprintf("%v", config["db_location"]))
 	case "mock":
-		pm.driver = NewMockDriver(fmt.Sprintf("%v", config["file_location"]))
+		pm.driver = NewMockDriver()
 	case "none":
 		pm.driver = NewNoPersistence()
+	case "log":
+		pm.driver = NewLogDriver(fmt.Sprintf("%v", config["file_location"]))
 	default:
 		pm.driver = NewFlatFileDriver()
 	}
@@ -129,5 +131,21 @@ func (pm *PersistenceManager) Sync(records []KvRecord) error {
 		}
 	}
 
+	// DEBUG - print all records on both sides
+
+	pm.logger.Println("Records on disk:")
+	diskRecord, err := pm.Load()
+	if err != nil {
+		return err
+	}
+	for _, record := range diskRecord {
+		pm.logger.Printf("Key: %v", record.Key)
+	}
+
+	pm.logger.Println("Records in memory:")
+	for _, record := range records {
+		pm.logger.Printf("Key: %v", record.Key)
+	}
+	fmt.Println("=====================================")
 	return nil
 }

@@ -8,7 +8,7 @@ func main() {
 	// TODO - Entry point code  here
 	// define server
 	config := map[string]string{
-		"driver":        "none",
+		"driver":        "mock",
 		"file_location": "log.txt",
 		"sync_interval": "120",
 	}
