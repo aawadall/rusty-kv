@@ -66,7 +66,7 @@ func (s *KVServer) Start() {
 
 		// Add the records to the container
 		s.logger.Printf("Loading %d records from persistence layer", len(records))
-		err = s.Records.BulkLoad(records)
+		err = s.Records.BulkLoad(records, s.logger)
 
 		if err != nil {
 			s.logger.Printf("Error loading data from persistence layer: %v", err)

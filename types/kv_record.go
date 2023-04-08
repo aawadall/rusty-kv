@@ -21,7 +21,7 @@ func NewKVRecord(key string, value []byte) *KVRecord {
 	record := &KVRecord{
 		Id:       uuid.New(),
 		Key:      key,
-		Value:    NewValuesContainer(),
+		Value:    NewValuesContainer(value),
 		Metadata: NewMetadataContainer(),
 	}
 

@@ -10,10 +10,12 @@ type ValuesContainer struct {
 	Value [][]byte
 }
 
-func NewValuesContainer() *ValuesContainer {
-	return &ValuesContainer{
+func NewValuesContainer(value []byte) *ValuesContainer {
+	container := &ValuesContainer{
 		Value: make([][]byte, 0),
 	}
+	container.Set(value)
+	return container
 }
 
 func (c *ValuesContainer) Get(version int) ([]byte, error) {
@@ -46,4 +48,10 @@ func (c *ValuesContainer) GetVersion() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return len(c.Value) - 1
+}
+
+func (c *ValuesContainer) Len() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.Value)
 }

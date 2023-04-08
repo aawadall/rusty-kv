@@ -45,12 +45,12 @@ func (ff *LogDriver) Write(record KvRecord) error {
 func (ff *LogDriver) Read(key string) (KvRecord, error) {
 	// Makeup a record
 	blob := []byte("mock blob")
-	valuesContainer := types.NewValuesContainer()
+	valuesContainer := types.NewValuesContainer(blob)
 
 	record := types.KVRecord{}
 	record.Key = key
 	record.Value = valuesContainer
-	record.Value.Set(blob)
+	
 	return record, nil
 }
 

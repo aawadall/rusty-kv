@@ -106,14 +106,20 @@ func (c *Container) List() []string {
 	return keys
 }
 
-func (c *Container) BulkLoad(records []KVRecord) error {
+func (c *Container) BulkLoad(records []KVRecord, logger *log.Logger) error {
 	c.mu.Lock()
+	logger.Println("BulkLoad() called")
 	defer c.mu.Unlock()
 	for _, record := range records {
 		fmt.Print(".")
 		c.Records[record.Key] = record
+
+		// DEBUG
+		logger.Printf("Loaded record: %s", record.Key)
+		// print number of value entries
+		logger.Printf("Number of value entries: %d", record.Value.Len())
 	}
-	
+
 	return nil
 }
 
