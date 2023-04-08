@@ -13,8 +13,9 @@ import (
 func TestNewKVServer(t *testing.T) {
 	defer quiet()()
 	// Arrange
+	config := map[string]string{}
 	// Act
-	svr := NewKVServer()
+	svr := NewKVServer(config)
 	expectedType := "*kvserver.KVServer"
 
 	// Assert that server is not nil
@@ -33,7 +34,8 @@ func TestNewKVServer(t *testing.T) {
 func TestKVServerStates(t *testing.T) {
 	defer quiet()()
 	// Arrange
-	svr := NewKVServer()
+	config := map[string]string{}
+	svr := NewKVServer(config)
 
 	// Assert that server is in the correct state
 	if svr.state != types.ServerUnknownState {

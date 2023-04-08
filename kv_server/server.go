@@ -105,6 +105,13 @@ func (s *KVServer) Start() {
 		// get int value from sSyncInterval
 		syncInterval, err := strconv.Atoi(sSyncInterval)
 
+		if err != nil {
+			s.logger.Printf("Error converting sync_interval to int: %v", err)
+			s.state = types.ServerError
+			wg.Done()
+			return
+		}
+
 		for s.state != types.ServerStopped &&
 			s.state != types.ServerError {
 			// TODO - Event loop code here
