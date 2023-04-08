@@ -205,10 +205,7 @@ func (ff *SQLiteDatabaseDriver) findRecord(key string) bool {
 		return false
 	}
 	defer rows.Close()
-	if rows.Next() {
-		return true
-	}
-	return false
+	return rows.Next()
 }
 
 // getRecord - get a record from the database
@@ -253,6 +250,12 @@ func (ff *SQLiteDatabaseDriver) getMetadata(key string) (map[string]string, erro
 
 // deleteRecord - delete a record from the database
 func (ff *SQLiteDatabaseDriver) deleteRecord(key string) error {
+	// confirm ff.db is not nil
+	if ff.db == nil {
+		// open the database
+		ff.initDatabase()
+	}
+
 	query := `DELETE FROM records WHERE key = ?;`
 	_, err := ff.db.Exec(query, key)
 	if err != nil {
@@ -263,6 +266,12 @@ func (ff *SQLiteDatabaseDriver) deleteRecord(key string) error {
 
 // deleteMetadata - delete metadata from the database
 func (ff *SQLiteDatabaseDriver) deleteMetadata(key string) error {
+	// confirm ff.db is not nil
+	if ff.db == nil {
+		// open the database
+		ff.initDatabase()
+	}
+
 	query := `DELETE FROM metadata WHERE key = ?;`
 	_, err := ff.db.Exec(query, key)
 	if err != nil {
