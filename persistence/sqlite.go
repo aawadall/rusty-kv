@@ -178,7 +178,10 @@ func (ff *SQLiteDatabaseDriver) initDatabase() {
 // insertRecord - insert a record into the database
 func (ff *SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
 	key := record.Key
-	currentValue := record.Value
+	currentValue, err := record.GetValue(-1)
+	if err != nil {
+		return err
+	}
 	version := record.GetVersion()
 
 	ff.logger.Printf("Inserting record into SQLite Database Driver with key: %v", key)
