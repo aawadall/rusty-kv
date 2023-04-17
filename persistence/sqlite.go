@@ -132,7 +132,7 @@ func (ff *SQLiteDatabaseDriver) initDatabase() {
 	// RECORDS TABLE
 	// id - int (auto increment)
 	// key - string (unique)
-	// value - blob
+	// value - blob - latest value
 	query := `CREATE TABLE IF NOT EXISTS records (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		key TEXT UNIQUE,
@@ -156,16 +156,42 @@ func (ff *SQLiteDatabaseDriver) initDatabase() {
 		UNIQUE (key, metadataKey)
 	);`
 	ff.db.Exec(query)
+
+	// ensure old values table exists
+	// OLD VALUES TABLE
+	// id - int (auto increment)
+	// key - string - FK to records table
+	// version - int
+	// value - blob
+	// UNIQUE (key, version)
+	query = `CREATE TABLE IF NOT EXISTS oldValues (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		key TEXT,
+		version INTEGER,
+		value BLOB,
+		FOREIGN KEY(key) REFERENCES records(key),
+		UNIQUE (key, version)
+	);`
+	ff.db.Exec(query)
 }
 
 // insertRecord - insert a record into the database
 func (ff *SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
 	key := record.Key
-	value := record.Value
+	currentValue := record.Value
+	version := record.GetVersion()
+
 	ff.logger.Printf("Inserting record into SQLite Database Driver with key: %v", key)
 	// upsert the record
 	query := `INSERT OR REPLACE INTO records (key, value) VALUES (?, ?);`
-	result, err := ff.db.Exec(query, key, value)
+
+	// TODO - remove after debugging
+	ff.logger.Printf("Query: %v", query)
+	ff.logger.Printf("Key: %v", key)
+	ff.logger.Printf("Value: %v", currentValue)
+	ff.logger.Printf("Value Type: %T", currentValue)
+
+	result, err := ff.db.Exec(query, key, currentValue)
 	if err != nil {
 		return err
 	}
@@ -175,6 +201,19 @@ func (ff *SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
 	}
 	if rowsAffected == 0 {
 		return errors.New("no rows affected")
+	}
+
+	// insert the old value
+	for i := 0; i < version; i++ {
+		query = `INSERT INTO oldValues (key, version, value) VALUES (?, ?, ?);`
+		value, err := record.GetValue(i)
+		if err != nil {
+			return err
+		}
+		_, err = ff.db.Exec(query, key, i, value)
+		if err != nil {
+			return err
+		}
 	}
 
 	ff.logger.Printf("Inserted record into SQLite Database Driver with key: %v", key)
