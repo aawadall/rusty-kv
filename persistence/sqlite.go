@@ -3,25 +3,26 @@ package persistence
 // SQLiteDatabaseDriver - sqlite database driver
 
 import (
-	"database/sql"
 	"errors"
 	"log"
 	"os"
 
+	"github.com/aawadall/simple-kv/types"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type SQLiteDatabaseDriver struct {
-	dbLocation string
-	db         *sql.DB
-	logger     *log.Logger
+	dbContainer *SqliteContainer
+	dbLocation  string
+	logger      *log.Logger
 }
 
 // NewSQLiteDatabaseDriver - create a new sqlite database driver
 func NewSQLiteDatabaseDriver(dbLocation string) *SQLiteDatabaseDriver {
 	driver := &SQLiteDatabaseDriver{
-		dbLocation: dbLocation,
-		logger:     log.New(os.Stdout, "sqlite: ", log.LstdFlags),
+		dbContainer: NewSqliteContainer(dbLocation),
+		dbLocation:  dbLocation,
+		logger:      log.New(os.Stdout, "sqlite: ", log.LstdFlags),
 	}
 
 	driver.logger.Printf("Creating SQLite Database Driver with location: %v", dbLocation)
@@ -57,11 +58,13 @@ func (ff *SQLiteDatabaseDriver) Write(record KvRecord) error {
 	// 1. Insert the record
 	err := ff.insertRecord(record)
 	if err != nil {
+		ff.logger.Printf("Error inserting record: %v", err.Error())
 		return err
 	}
 	// 2. Insert the metadata
 	err = ff.insertMetadata(record)
 	if err != nil {
+		ff.logger.Printf("Error inserting metadata: %v", err.Error())
 		return err
 	}
 	ff.logger.Printf("Wrote record to SQLite Database Driver with key: %v", record.Key)
@@ -126,7 +129,6 @@ func (ff *SQLiteDatabaseDriver) Load() ([]KvRecord, error) {
 
 // initDatabase - initialize the database
 func (ff *SQLiteDatabaseDriver) initDatabase() {
-	ff.db, _ = sql.Open("sqlite3", ff.dbLocation)
 
 	// ensure record table exists
 	// RECORDS TABLE
@@ -138,8 +140,12 @@ func (ff *SQLiteDatabaseDriver) initDatabase() {
 		key TEXT UNIQUE,
 		value BLOB
 	);`
-	ff.db.Exec(query)
 
+	_, err := ff.dbContainer.ExecuteQuery(query)
+
+	if err != nil {
+		ff.logger.Printf("Error creating records table: %v", err.Error())
+	}
 	// ensure metadata table exists
 	// METADATA TABLE
 	// id - int (auto increment)
@@ -155,7 +161,11 @@ func (ff *SQLiteDatabaseDriver) initDatabase() {
 		FOREIGN KEY(key) REFERENCES records(key),
 		UNIQUE (key, metadataKey)
 	);`
-	ff.db.Exec(query)
+	_, err = ff.dbContainer.ExecuteQuery(query)
+
+	if err != nil {
+		ff.logger.Printf("Error creating metadata table: %v", err.Error())
+	}
 
 	// ensure old values table exists
 	// OLD VALUES TABLE
@@ -172,7 +182,11 @@ func (ff *SQLiteDatabaseDriver) initDatabase() {
 		FOREIGN KEY(key) REFERENCES records(key),
 		UNIQUE (key, version)
 	);`
-	ff.db.Exec(query)
+	_, err = ff.dbContainer.ExecuteQuery(query)
+
+	if err != nil {
+		ff.logger.Printf("Error creating oldValues table: %v", err.Error())
+	}
 }
 
 // insertRecord - insert a record into the database
@@ -194,11 +208,14 @@ func (ff *SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
 	ff.logger.Printf("Value: %v", currentValue)
 	ff.logger.Printf("Value Type: %T", currentValue)
 
-	result, err := ff.db.Exec(query, key, currentValue)
+	result, err := ff.dbContainer.ExecuteQuery(query, key, currentValue)
 	if err != nil {
 		return err
 	}
-	rowsAffected, err := result.RowsAffected()
+
+	// find rows affected
+	rowsAffected, err := RowsAffected(result)
+
 	if err != nil {
 		return err
 	}
@@ -213,7 +230,8 @@ func (ff *SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
 		if err != nil {
 			return err
 		}
-		_, err = ff.db.Exec(query, key, i, value)
+
+		_, err = ff.dbContainer.ExecuteQuery(query, key, i, value)
 		if err != nil {
 			return err
 		}
@@ -231,7 +249,7 @@ func (ff *SQLiteDatabaseDriver) insertMetadata(record KvRecord) error {
 	// upsert the metadata
 	for k, v := range metadata {
 		query := `INSERT OR REPLACE INTO metadata (key, metadataKey, metadataValue) VALUES (?, ?, ?);`
-		_, err := ff.db.Exec(query, key, k, v)
+		_, err := ff.dbContainer.ExecuteQuery(query, key, k, v)
 		if err != nil {
 			return err
 		}
@@ -242,7 +260,7 @@ func (ff *SQLiteDatabaseDriver) insertMetadata(record KvRecord) error {
 // findRecord - find a record in the database
 func (ff *SQLiteDatabaseDriver) findRecord(key string) bool {
 	query := `SELECT key FROM records WHERE key = ?;`
-	rows, err := ff.db.Query(query, key)
+	rows, err := ff.dbContainer.ExecuteQuery(query, key)
 	if err != nil {
 		return false
 	}
@@ -253,18 +271,20 @@ func (ff *SQLiteDatabaseDriver) findRecord(key string) bool {
 // getRecord - get a record from the database
 func (ff *SQLiteDatabaseDriver) getRecord(key string) (KvRecord, error) {
 	query := `SELECT key, value FROM records WHERE key = ?;`
-	rows, err := ff.db.Query(query, key)
+	rows, err := ff.dbContainer.ExecuteQuery(query, key)
 	if err != nil {
 		return KvRecord{}, err
 	}
 	defer rows.Close()
 	if rows.Next() {
-		var record KvRecord
-		err := rows.Scan(&record.Key, &record.Value)
+		key := ""
+		value := []byte{}
+		err := rows.Scan(&key, &value)
 		if err != nil {
 			return KvRecord{}, err
 		}
-		return record, nil
+		record := types.NewKVRecord(key, value)
+		return *record, nil
 	}
 	return KvRecord{}, nil
 }
@@ -272,7 +292,7 @@ func (ff *SQLiteDatabaseDriver) getRecord(key string) (KvRecord, error) {
 // getMetadata - get metadata from the database
 func (ff *SQLiteDatabaseDriver) getMetadata(key string) (map[string]string, error) {
 	query := `SELECT metadataKey, metadataValue FROM metadata WHERE key = ?;`
-	rows, err := ff.db.Query(query, key)
+	rows, err := ff.dbContainer.ExecuteQuery(query, key)
 
 	if err != nil {
 		return nil, err
@@ -292,14 +312,9 @@ func (ff *SQLiteDatabaseDriver) getMetadata(key string) (map[string]string, erro
 
 // deleteRecord - delete a record from the database
 func (ff *SQLiteDatabaseDriver) deleteRecord(key string) error {
-	// confirm ff.db is not nil
-	if ff.db == nil {
-		// open the database
-		ff.initDatabase()
-	}
 
 	query := `DELETE FROM records WHERE key = ?;`
-	_, err := ff.db.Exec(query, key)
+	_, err := ff.dbContainer.ExecuteQuery(query, key)
 	if err != nil {
 		return err
 	}
@@ -308,14 +323,9 @@ func (ff *SQLiteDatabaseDriver) deleteRecord(key string) error {
 
 // deleteMetadata - delete metadata from the database
 func (ff *SQLiteDatabaseDriver) deleteMetadata(key string) error {
-	// confirm ff.db is not nil
-	if ff.db == nil {
-		// open the database
-		ff.initDatabase()
-	}
 
 	query := `DELETE FROM metadata WHERE key = ?;`
-	_, err := ff.db.Exec(query, key)
+	_, err := ff.dbContainer.ExecuteQuery(query, key)
 	if err != nil {
 		return err
 	}
