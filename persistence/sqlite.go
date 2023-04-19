@@ -27,7 +27,7 @@ func NewSQLiteDatabaseDriver(dbLocation string) *SQLiteDatabaseDriver {
 
 	driver.logger.Printf("Creating SQLite Database Driver with location: %v", dbLocation)
 	// initialize the driver
-	driver.init()
+	driver.initDatabase()
 
 	return driver
 }

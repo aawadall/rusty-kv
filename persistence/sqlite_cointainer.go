@@ -2,7 +2,10 @@ package persistence
 
 import (
 	"database/sql"
+	"log"
 	"sync"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // SqliteContainer - sqlite container
@@ -27,6 +30,10 @@ func (sc *SqliteContainer) ExecuteQuery(query string, args ...interface{}) (*sql
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 
+	// inspect args
+	for _, arg := range args {
+		log.Printf("arg: %v (%T)", arg, arg)
+	}
 	// open the database
 	db, err := sql.Open("sqlite3", sc.dbLocation)
 
@@ -49,6 +56,35 @@ func (sc *SqliteContainer) ExecuteQuery(query string, args ...interface{}) (*sql
 	// return the rows
 	return rows, nil
 
+}
+
+// Initialize Database
+func (sc *SqliteContainer) InitDatabase(tables []string) error {
+	// Lock the mutex
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+
+	// open the database
+	db, err := sql.Open("sqlite3", sc.dbLocation)
+
+	// if there is an error, return it
+	if err != nil {
+		return err
+	}
+
+	// defer closing the database
+	defer db.Close()
+
+	// execute the query
+	for _, table := range tables {
+		_, err := db.Exec(table)
+		if err != nil {
+			return err
+		}
+	}
+
+	// return nil
+	return nil
 }
 
 // *sql.Rows rows affected
