@@ -11,15 +11,15 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type SQLiteDatabaseDriver struct {
+type _SQLiteDatabaseDriver struct {
 	dbContainer *SqliteContainer
 	dbLocation  string
 	logger      *log.Logger
 }
 
 // NewSQLiteDatabaseDriver - create a new sqlite database driver
-func NewSQLiteDatabaseDriver(dbLocation string) *SQLiteDatabaseDriver {
-	driver := &SQLiteDatabaseDriver{
+func NewSQLiteDatabaseDriver(dbLocation string) *_SQLiteDatabaseDriver {
+	driver := &_SQLiteDatabaseDriver{
 		dbContainer: NewSqliteContainer(dbLocation),
 		dbLocation:  dbLocation,
 		logger:      log.New(os.Stdout, "sqlite: ", log.LstdFlags),
@@ -33,7 +33,7 @@ func NewSQLiteDatabaseDriver(dbLocation string) *SQLiteDatabaseDriver {
 }
 
 // init - initialize the sqlite database driver
-func (ff *SQLiteDatabaseDriver) init() {
+func (ff *_SQLiteDatabaseDriver) init() {
 	ff.logger.Printf("Initializing SQLite Database Driver with location: %v", ff.dbLocation)
 	// TODO: implement
 	var file *os.File
@@ -52,7 +52,7 @@ func (ff *SQLiteDatabaseDriver) init() {
 }
 
 // Write - write a record to disk
-func (ff *SQLiteDatabaseDriver) Write(record KvRecord) error {
+func (ff *_SQLiteDatabaseDriver) Write(record KvRecord) error {
 	// TODO: implement
 	ff.logger.Printf("Writing record to SQLite Database Driver with key: %v", record.Key)
 	// 1. Insert the record
@@ -72,7 +72,7 @@ func (ff *SQLiteDatabaseDriver) Write(record KvRecord) error {
 }
 
 // Read - read a record from disk
-func (ff *SQLiteDatabaseDriver) Read(key string) (KvRecord, error) {
+func (ff *_SQLiteDatabaseDriver) Read(key string) (KvRecord, error) {
 	// TODO: implement
 	ff.logger.Printf("Reading record from SQLite Database Driver with key: %v", key)
 	if ff.findRecord(key) {
@@ -98,7 +98,7 @@ func (ff *SQLiteDatabaseDriver) Read(key string) (KvRecord, error) {
 }
 
 // Delete - delete a record from disk
-func (ff *SQLiteDatabaseDriver) Delete(key string) error {
+func (ff *_SQLiteDatabaseDriver) Delete(key string) error {
 	// TODO: implement
 	// 1. Delete they metadata
 	err := ff.deleteMetadata(key)
@@ -116,19 +116,19 @@ func (ff *SQLiteDatabaseDriver) Delete(key string) error {
 }
 
 // Compare - compare a record to disk
-func (ff *SQLiteDatabaseDriver) Compare(record KvRecord) (bool, error) {
+func (ff *_SQLiteDatabaseDriver) Compare(record KvRecord) (bool, error) {
 	// TODO: implement
 	return false, nil
 }
 
 // Load - load all records from disk
-func (ff *SQLiteDatabaseDriver) Load() ([]KvRecord, error) {
+func (ff *_SQLiteDatabaseDriver) Load() ([]KvRecord, error) {
 	// TODO: implement
 	return []KvRecord{}, nil
 }
 
 // initDatabase - initialize the database
-func (ff *SQLiteDatabaseDriver) initDatabase() {
+func (ff *_SQLiteDatabaseDriver) initDatabase() {
 
 	// ensure record table exists
 	// RECORDS TABLE
@@ -190,7 +190,7 @@ func (ff *SQLiteDatabaseDriver) initDatabase() {
 }
 
 // insertRecord - insert a record into the database
-func (ff *SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
+func (ff *_SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
 	key := record.Key
 	currentValue, err := record.GetValue(-1)
 	if err != nil {
@@ -242,7 +242,7 @@ func (ff *SQLiteDatabaseDriver) insertRecord(record KvRecord) error {
 }
 
 // insertMetadata - insert metadata into the database
-func (ff *SQLiteDatabaseDriver) insertMetadata(record KvRecord) error {
+func (ff *_SQLiteDatabaseDriver) insertMetadata(record KvRecord) error {
 	key := record.Key
 	metadata := record.Metadata.GetAll()
 	ff.logger.Printf("Inserting metadata into SQLite Database Driver with key: %v", key)
@@ -258,7 +258,7 @@ func (ff *SQLiteDatabaseDriver) insertMetadata(record KvRecord) error {
 }
 
 // findRecord - find a record in the database
-func (ff *SQLiteDatabaseDriver) findRecord(key string) bool {
+func (ff *_SQLiteDatabaseDriver) findRecord(key string) bool {
 	query := `SELECT key FROM records WHERE key = ?;`
 	rows, err := ff.dbContainer.ExecuteQuery(query, key)
 	if err != nil {
@@ -269,7 +269,7 @@ func (ff *SQLiteDatabaseDriver) findRecord(key string) bool {
 }
 
 // getRecord - get a record from the database
-func (ff *SQLiteDatabaseDriver) getRecord(key string) (KvRecord, error) {
+func (ff *_SQLiteDatabaseDriver) getRecord(key string) (KvRecord, error) {
 	query := `SELECT key, value FROM records WHERE key = ?;`
 	rows, err := ff.dbContainer.ExecuteQuery(query, key)
 	if err != nil {
@@ -290,7 +290,7 @@ func (ff *SQLiteDatabaseDriver) getRecord(key string) (KvRecord, error) {
 }
 
 // getMetadata - get metadata from the database
-func (ff *SQLiteDatabaseDriver) getMetadata(key string) (map[string]string, error) {
+func (ff *_SQLiteDatabaseDriver) getMetadata(key string) (map[string]string, error) {
 	query := `SELECT metadataKey, metadataValue FROM metadata WHERE key = ?;`
 	rows, err := ff.dbContainer.ExecuteQuery(query, key)
 
@@ -311,7 +311,7 @@ func (ff *SQLiteDatabaseDriver) getMetadata(key string) (map[string]string, erro
 }
 
 // deleteRecord - delete a record from the database
-func (ff *SQLiteDatabaseDriver) deleteRecord(key string) error {
+func (ff *_SQLiteDatabaseDriver) deleteRecord(key string) error {
 
 	query := `DELETE FROM records WHERE key = ?;`
 	_, err := ff.dbContainer.ExecuteQuery(query, key)
@@ -322,7 +322,7 @@ func (ff *SQLiteDatabaseDriver) deleteRecord(key string) error {
 }
 
 // deleteMetadata - delete metadata from the database
-func (ff *SQLiteDatabaseDriver) deleteMetadata(key string) error {
+func (ff *_SQLiteDatabaseDriver) deleteMetadata(key string) error {
 
 	query := `DELETE FROM metadata WHERE key = ?;`
 	_, err := ff.dbContainer.ExecuteQuery(query, key)
