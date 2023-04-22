@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -229,3 +230,46 @@ func (driver *SQLiteDriver) Load() ([]*KvRecord, error) {
 }
 
 // helper functions
+// insertRecord - insert a record into the database
+func (driver *SQLiteDriver) insertRecord(record *KvRecord) (string, error) {
+	return driver.insert(sqlOperations["insertRecord"], record.Key, record.Value)
+}
+
+// insertOldValues - insert old values into the database
+func (driver *SQLiteDriver) insertOldValues(record *KvRecord) (string, error) {
+	return driver.insert(sqlOperations["insertOldValue"], record.Key, record.OldValue)
+}
+
+// insertMetadata - insert metadata into the database
+func (driver *SQLiteDriver) insertMetadata(record *KvRecord) (string, error) {
+	return driver.insert(sqlOperations["insertMetadata"], record.Key, record.Metadata)
+}
+
+// insert - insert a record into the database
+func (driver *SQLiteDriver) insert(query string, key string, value string) (string, error) {
+	// open the database
+	db, err := sql.Open("sqlite3", driver.dbLocation)
+
+	if err != nil {
+		driver.logger.Printf("Error opening database: %v", err.Error())
+		return "", err
+	}
+
+	defer db.Close()
+
+	// insert the record
+	result, err := db.Exec(query, key, value)
+	if err != nil {
+		driver.logger.Printf("Error inserting record: %v", err.Error())
+		return "", err
+	}
+
+	// get the token
+	token, err := result.LastInsertId()
+	if err != nil {
+		driver.logger.Printf("Error getting token: %v", err.Error())
+		return "", err
+	}
+
+	return strconv.FormatInt(token, 10), nil
+}
