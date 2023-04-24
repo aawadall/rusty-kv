@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -232,12 +233,35 @@ func (driver *SQLiteDriver) Load() ([]*KvRecord, error) {
 // helper functions
 // insertRecord - insert a record into the database
 func (driver *SQLiteDriver) insertRecord(record *KvRecord) (string, error) {
-	return driver.insert(sqlOperations["insertRecord"], record.Key, record.Value)
+	value, err := record.Value.Get(-1)
+	if err != nil {
+		driver.logger.Printf("Error getting value: %v", err.Error())
+		return "", err
+	}
+	return driver.insert(sqlOperations["insertRecord"], record.Key, value)
 }
 
 // insertOldValues - insert old values into the database
 func (driver *SQLiteDriver) insertOldValues(record *KvRecord) (string, error) {
-	return driver.insert(sqlOperations["insertOldValue"], record.Key, record.OldValue)
+	// get version
+	version := record.Value.GetVersion()
+	tokens := []string{}
+	// insert old values
+	for i := 0; i < version; i++ {
+		value, err := record.Value.Get(i)
+		if err != nil {
+			driver.logger.Printf("Error getting value: %v", err.Error())
+			return "", err
+		}
+		token, err := driver.insert(sqlOperations["insertOldValue"], record.Key, value)
+		if err != nil {
+			driver.logger.Printf("Error inserting old value: %v", err.Error())
+			return "", err
+		}
+		tokens = append(tokens, token)
+	}
+
+	return makeToken(tokens), nil
 }
 
 // insertMetadata - insert metadata into the database
@@ -246,7 +270,7 @@ func (driver *SQLiteDriver) insertMetadata(record *KvRecord) (string, error) {
 }
 
 // insert - insert a record into the database
-func (driver *SQLiteDriver) insert(query string, key string, value string) (string, error) {
+func (driver *SQLiteDriver) insert(query string, key string, value []byte) (string, error) {
 	// open the database
 	db, err := sql.Open("sqlite3", driver.dbLocation)
 
@@ -272,4 +296,10 @@ func (driver *SQLiteDriver) insert(query string, key string, value string) (stri
 	}
 
 	return strconv.FormatInt(token, 10), nil
+}
+
+// helper functions
+// make token
+func makeToken(tokens []string) string {
+	return strings.Join(tokens, ",")
 }
