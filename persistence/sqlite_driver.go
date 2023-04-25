@@ -4,9 +4,8 @@ import (
 	"database/sql"
 	"log"
 	"os"
-	"strconv"
-	"strings"
 
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -43,8 +42,14 @@ var sqlOperations = map[string]string{
 	"selectAllRecords":  `SELECT key FROM records;`,
 }
 
-// SQLite Driver
+// helper struct
+type Transaction struct {
+	TokenId string
+	Query   string
+	Args    []interface{}
+}
 
+// SQLite Driver
 type SQLiteDriver struct {
 	dbLocation string
 	logger     *log.Logger
@@ -90,32 +95,35 @@ func (driver *SQLiteDriver) init() {
 // Write - write a record to the database
 func (driver *SQLiteDriver) Write(record *KvRecord) error {
 	// mementos
-	transaction := []string{}
+	transactions := []Transaction{}
 
 	// insert record
-	token, err := driver.insertRecord(record)
-	transaction = append(transaction, token)
+	transaction, err := driver.insertRecord(record)
+
+	// append the token to the transaction
+
+	transactions = append(transactions, transaction)
 	if err != nil {
 		driver.logger.Printf("Error inserting record: %v", err.Error())
-		driver.rollback(transaction)
+		driver.rollback(transactions)
 		return err
 	}
 
 	// insert old values
-	token, err = driver.insertOldValues(record)
-	transaction = append(transaction, token)
+	transaction, err = driver.insertOldValues(record)
+	transactions = append(transactions, transaction)
 	if err != nil {
 		driver.logger.Printf("Error inserting old values: %v", err.Error())
-		driver.rollback(transaction)
+		driver.rollback(transactions)
 		return err
 	}
 
 	// insert metadata
-	token, err = driver.insertMetadata(record)
-	transaction = append(transaction, token)
+	transaction, err = driver.insertMetadata(record)
+	transactions = append(transactions, transaction)
 	if err != nil {
 		driver.logger.Printf("Error inserting metadata: %v", err.Error())
-		driver.rollback(transaction)
+		driver.rollback(transactions)
 		return err
 	}
 
@@ -232,12 +240,13 @@ func (driver *SQLiteDriver) Load() ([]*KvRecord, error) {
 
 // helper functions
 // insertRecord - insert a record into the database
-func (driver *SQLiteDriver) insertRecord(record *KvRecord) (string, error) {
+func (driver *SQLiteDriver) insertRecord(record *KvRecord) (Transaction, error) {
 	value, err := record.Value.Get(-1)
 	if err != nil {
 		driver.logger.Printf("Error getting value: %v", err.Error())
-		return "", err
+		return Transaction{}, err
 	}
+
 	return driver.insert(sqlOperations["insertRecord"], record.Key, value)
 }
 
@@ -270,13 +279,13 @@ func (driver *SQLiteDriver) insertMetadata(record *KvRecord) (string, error) {
 }
 
 // insert - insert a record into the database
-func (driver *SQLiteDriver) insert(query string, key string, value []byte) (string, error) {
+func (driver *SQLiteDriver) insert(query string, key string, value []byte) (Transaction, error) {
 	// open the database
 	db, err := sql.Open("sqlite3", driver.dbLocation)
 
 	if err != nil {
 		driver.logger.Printf("Error opening database: %v", err.Error())
-		return "", err
+		return Transaction{}, err
 	}
 
 	defer db.Close()
@@ -285,21 +294,45 @@ func (driver *SQLiteDriver) insert(query string, key string, value []byte) (stri
 	result, err := db.Exec(query, key, value)
 	if err != nil {
 		driver.logger.Printf("Error inserting record: %v", err.Error())
-		return "", err
+		return Transaction{}, err
 	}
 
 	// get the token
-	token, err := result.LastInsertId()
+	result, err = result.LastInsertId()
 	if err != nil {
 		driver.logger.Printf("Error getting token: %v", err.Error())
-		return "", err
+		return Transaction{}, err
 	}
 
-	return strconv.FormatInt(token, 10), nil
+	token := makeToken()
+
+	transaction := Transaction{
+		TokenId: token,
+		Query:   query,
+		Args:    []interface{}{key, value},
+	}
+	return transaction, nil
+}
+
+// rollback - rollback a transaction
+func (driver *SQLiteDriver) rollback(transactions []Transaction) {
+	// treat transaction as a stack
+	for len(transactions) > 0 {
+		// pop the transaction
+		transaction := transactions[len(transactions)-1]
+
+		// reverse the token
+		driver.reverseTransaction(transaction)
+
+		// remove the token
+		transactions = transactions[:len(transactions)-1]
+	}
 }
 
 // helper functions
 // make token
-func makeToken(tokens []string) string {
-	return strings.Join(tokens, ",")
+func makeToken() string {
+	// UUID
+	uuid := uuid.New()
+	return uuid.String()
 }
