@@ -110,8 +110,11 @@ func (driver *SQLiteDriver) Write(record *KvRecord) error {
 	}
 
 	// insert old values
-	transaction, err = driver.insertOldValues(record)
-	transactions = append(transactions, transaction)
+	old_value_transactions, err := driver.insertOldValues(record)
+
+	// append old value transactions to the transactions
+	transactions = append(transactions, old_value_transactions...)
+
 	if err != nil {
 		driver.logger.Printf("Error inserting old values: %v", err.Error())
 		driver.rollback(transactions)
@@ -251,26 +254,26 @@ func (driver *SQLiteDriver) insertRecord(record *KvRecord) (Transaction, error) 
 }
 
 // insertOldValues - insert old values into the database
-func (driver *SQLiteDriver) insertOldValues(record *KvRecord) (string, error) {
+func (driver *SQLiteDriver) insertOldValues(record *KvRecord) ([]Transaction, error) {
 	// get version
 	version := record.Value.GetVersion()
-	tokens := []string{}
+	transactions := []Transaction{}
 	// insert old values
 	for i := 0; i < version; i++ {
 		value, err := record.Value.Get(i)
 		if err != nil {
 			driver.logger.Printf("Error getting value: %v", err.Error())
-			return "", err
+			return []Transaction{}, err
 		}
 		token, err := driver.insert(sqlOperations["insertOldValue"], record.Key, value)
 		if err != nil {
 			driver.logger.Printf("Error inserting old value: %v", err.Error())
-			return "", err
+			return []Transaction{}, err
 		}
-		tokens = append(tokens, token)
+		transactions = append(transactions, token)
 	}
 
-	return makeToken(tokens), nil
+	return transactions, nil
 }
 
 // insertMetadata - insert metadata into the database
