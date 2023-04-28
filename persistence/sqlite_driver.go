@@ -313,7 +313,7 @@ func (driver *SQLiteDriver) insert(query string, key string, value []byte) (Tran
 	}
 
 	// get the token
-	result, err = result.LastInsertId()
+	_, err = result.LastInsertId()
 	if err != nil {
 		driver.logger.Printf("Error getting token: %v", err.Error())
 		return Transaction{}, err
