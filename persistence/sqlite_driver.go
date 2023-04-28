@@ -122,8 +122,8 @@ func (driver *SQLiteDriver) Write(record *KvRecord) error {
 	}
 
 	// insert metadata
-	transaction, err = driver.insertMetadata(record)
-	transactions = append(transactions, transaction)
+	metadata_transaction, err := driver.insertMetadata(record)
+	transactions = append(transactions, metadata_transaction...)
 	if err != nil {
 		driver.logger.Printf("Error inserting metadata: %v", err.Error())
 		driver.rollback(transactions)
@@ -277,8 +277,20 @@ func (driver *SQLiteDriver) insertOldValues(record *KvRecord) ([]Transaction, er
 }
 
 // insertMetadata - insert metadata into the database
-func (driver *SQLiteDriver) insertMetadata(record *KvRecord) (string, error) {
-	return driver.insert(sqlOperations["insertMetadata"], record.Key, record.Metadata)
+func (driver *SQLiteDriver) insertMetadata(record *KvRecord) ([]Transaction, error) {
+	transactions := []Transaction{}
+
+	// insert metadata
+	for key, value := range record.Metadata.GetAll() {
+		byte_value := []byte(value)
+		transaction, err := driver.insert(sqlOperations["insertMetadata"], key, byte_value)
+		if err != nil {
+			driver.logger.Printf("Error inserting metadata: %v", err.Error())
+			return []Transaction{}, err
+		}
+		transactions = append(transactions, transaction)
+	}
+	return transactions, nil
 }
 
 // insert - insert a record into the database

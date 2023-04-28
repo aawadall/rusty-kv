@@ -23,7 +23,7 @@ func NewPersistenceManager(config map[string]interface{}) *PersistenceManager {
 	case "flat_file":
 		pm.driver = NewFlatFileDriver()
 	case "sqlite":
-		pm.driver = NewSQLiteDatabaseDriver(fmt.Sprintf("%v", config["db_location"]))
+		pm.driver = NewSQLiteDriver(fmt.Sprintf("%v", config["db_location"]))
 	case "mock":
 		pm.driver = NewMockDriver()
 	case "none":
