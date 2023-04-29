@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/aawadall/simple-kv/types"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -342,6 +343,46 @@ func (driver *SQLiteDriver) rollback(transactions []Transaction) {
 		// remove the token
 		transactions = transactions[:len(transactions)-1]
 	}
+}
+
+// get record
+func (driver *SQLiteDriver) getRecord(key string) (*KvRecord, error) {
+	// open the database
+	db, err := sql.Open("sqlite3", driver.dbLocation)
+
+	if err != nil {
+		driver.logger.Printf("Error opening database: %v", err.Error())
+		return nil, err
+	}
+
+	defer db.Close()
+
+	// get the record
+	rows, err := db.Query(sqlOperations["selectRecord"], key)
+	if err != nil {
+		driver.logger.Printf("Error selecting record: %v", err.Error())
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	// load the record
+	record := KvRecord{}
+	for rows.Next() {
+		var key string
+		var value []byte
+		err := rows.Scan(&key, &value)
+		if err != nil {
+			driver.logger.Printf("Error scanning record: %v", err.Error())
+			return nil, err
+		}
+
+		record.Key = key
+		record.Value = &types.ValuesContainer{}
+		record.Value.Set(value)
+	}
+
+	return &record, nil
 }
 
 // helper functions
