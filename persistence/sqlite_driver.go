@@ -346,13 +346,13 @@ func (driver *SQLiteDriver) rollback(transactions []Transaction) {
 }
 
 // get record
-func (driver *SQLiteDriver) getRecord(key string) (*KvRecord, error) {
+func (driver *SQLiteDriver) getRecord(key *KvRecord) (error) {
 	// open the database
 	db, err := sql.Open("sqlite3", driver.dbLocation)
 
 	if err != nil {
 		driver.logger.Printf("Error opening database: %v", err.Error())
-		return nil, err
+		return err
 	}
 
 	defer db.Close()
@@ -361,7 +361,7 @@ func (driver *SQLiteDriver) getRecord(key string) (*KvRecord, error) {
 	rows, err := db.Query(sqlOperations["selectRecord"], key)
 	if err != nil {
 		driver.logger.Printf("Error selecting record: %v", err.Error())
-		return nil, err
+		return err
 	}
 
 	defer rows.Close()
@@ -374,7 +374,7 @@ func (driver *SQLiteDriver) getRecord(key string) (*KvRecord, error) {
 		err := rows.Scan(&key, &value)
 		if err != nil {
 			driver.logger.Printf("Error scanning record: %v", err.Error())
-			return nil, err
+			return err
 		}
 
 		record.Key = key
@@ -382,7 +382,7 @@ func (driver *SQLiteDriver) getRecord(key string) (*KvRecord, error) {
 		record.Value.Set(value)
 	}
 
-	return &record, nil
+	return nil
 }
 
 // helper functions
