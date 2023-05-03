@@ -346,7 +346,7 @@ func (driver *SQLiteDriver) rollback(transactions []Transaction) {
 }
 
 // get record
-func (driver *SQLiteDriver) getRecord(key *KvRecord) (error) {
+func (driver *SQLiteDriver) getRecord(key *KvRecord) error {
 	// open the database
 	db, err := sql.Open("sqlite3", driver.dbLocation)
 
@@ -385,9 +385,8 @@ func (driver *SQLiteDriver) getRecord(key *KvRecord) (error) {
 	return nil
 }
 
-
-// get old values 
-func (driver *SQLiteDriver) getOldValues(key *KvRecord) (error) {
+// get old values
+func (driver *SQLiteDriver) getOldValues(key *KvRecord) error {
 	// open the database
 	db, err := sql.Open("sqlite3", driver.dbLocation)
 
@@ -399,7 +398,8 @@ func (driver *SQLiteDriver) getOldValues(key *KvRecord) (error) {
 	defer db.Close()
 
 	// get the record
-	rows, err := db.Query(sqlOperations["selectOldValues"], key)
+	args := []string{key.Key, string(key.Value.GetVersion())}
+	rows, err := db.Query(sqlOperations["selectOldValues"], args)
 	if err != nil {
 		driver.logger.Printf("Error selecting old values: %v", err.Error())
 		return err
@@ -425,6 +425,48 @@ func (driver *SQLiteDriver) getOldValues(key *KvRecord) (error) {
 
 	return nil
 }
+
+// get metadata
+func (driver *SQLiteDriver) getMetadata(key *KvRecord) error {
+	// open database
+	db, err := sql.Open("sqlite3", driver.dbLocation)
+
+	if err != nil {
+		driver.logger.Printf("Error opening database: %v", err.Error())
+		return err
+	}
+
+	defer db.Close()
+
+	// get the record
+	args := []string{key.Key, string(key.Value.GetVersion())}
+	rows, err := db.Query(sqlOperations["selectMetadata"], args)
+
+	if err != nil {
+		driver.logger.Printf("Error selecting metadata: %v", err.Error())
+		return err
+	}
+
+	defer rows.Close()
+
+	// load the record
+	for rows.Next() {
+		var key string
+		var value []byte
+		err := rows.Scan(&key, &value)
+		if err != nil {
+			driver.logger.Printf("Error scanning metadata: %v", err.Error())
+			return err
+		}
+
+		record := KvRecord{}
+		record.Key = key
+		record.Value = &types.ValuesContainer{}
+		record.Value.Set(value)
+	}
+	return nil
+}
+
 // helper functions
 // make token
 func makeToken() string {
