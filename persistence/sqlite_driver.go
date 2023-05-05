@@ -474,3 +474,16 @@ func makeToken() string {
 	uuid := uuid.New()
 	return uuid.String()
 }
+
+// match records 
+func matchRecords(record1 *KvRecord, record2 *KvRecord) bool {
+	if record1.Key != record2.Key {
+		return false
+	}
+
+	if record1.Value.GetVersion() != record2.Value.GetVersion() {
+		return false
+	}
+
+	return true
+}
