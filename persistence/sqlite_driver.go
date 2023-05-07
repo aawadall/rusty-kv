@@ -467,6 +467,29 @@ func (driver *SQLiteDriver) getMetadata(key *KvRecord) error {
 	return nil
 }
 
+
+// reverse transaction 
+func (driver *SQLiteDriver) reverseTransaction(transaction Transaction) error {
+	// open the database
+	db, err := sql.Open("sqlite3", driver.dbLocation)
+
+	if err != nil {
+		driver.logger.Printf("Error opening database: %v", err.Error())
+		return err
+	}
+
+	defer db.Close()
+
+	// reverse the transaction
+	_, err = db.Exec(transaction.Query, transaction.Args...)
+	if err != nil {
+		driver.logger.Printf("Error reversing transaction: %v", err.Error())
+		return err
+	}
+
+	return nil
+}
+
 // helper functions
 // make token
 func makeToken() string {
