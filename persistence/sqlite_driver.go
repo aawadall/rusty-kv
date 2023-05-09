@@ -94,12 +94,12 @@ func (driver *SQLiteDriver) init() {
 
 // Implement the Driver interface
 // Write - write a record to the database
-func (driver *SQLiteDriver) Write(record *KvRecord) error {
+func (driver *SQLiteDriver) Write(record KvRecord) error {
 	// mementos
 	transactions := []Transaction{}
 
 	// insert record
-	transaction, err := driver.insertRecord(record)
+	transaction, err := driver.insertRecord(&record)
 
 	// append the token to the transaction
 
@@ -111,7 +111,7 @@ func (driver *SQLiteDriver) Write(record *KvRecord) error {
 	}
 
 	// insert old values
-	old_value_transactions, err := driver.insertOldValues(record)
+	old_value_transactions, err := driver.insertOldValues(&record)
 
 	// append old value transactions to the transactions
 	transactions = append(transactions, old_value_transactions...)
@@ -123,7 +123,7 @@ func (driver *SQLiteDriver) Write(record *KvRecord) error {
 	}
 
 	// insert metadata
-	metadata_transaction, err := driver.insertMetadata(record)
+	metadata_transaction, err := driver.insertMetadata(&record)
 	transactions = append(transactions, metadata_transaction...)
 	if err != nil {
 		driver.logger.Printf("Error inserting metadata: %v", err.Error())
@@ -135,7 +135,7 @@ func (driver *SQLiteDriver) Write(record *KvRecord) error {
 }
 
 // Read - read a record from the database
-func (driver *SQLiteDriver) Read(key string) (*KvRecord, error) {
+func (driver *SQLiteDriver) Read(key string) (KvRecord, error) {
 	record := &KvRecord{
 		Key: key,
 	}
@@ -144,24 +144,24 @@ func (driver *SQLiteDriver) Read(key string) (*KvRecord, error) {
 	err := driver.getRecord(record)
 	if err != nil {
 		driver.logger.Printf("Error getting record: %v", err.Error())
-		return nil, err
+		return KvRecord{}, err
 	}
 
 	// get the old values
 	err = driver.getOldValues(record)
 	if err != nil {
 		driver.logger.Printf("Error getting old values: %v", err.Error())
-		return nil, err
+		return KvRecord{}, err
 	}
 
 	// get the metadata
 	err = driver.getMetadata(record)
 	if err != nil {
 		driver.logger.Printf("Error getting metadata: %v", err.Error())
-		return nil, err
+		return KvRecord{}, err
 	}
 
-	return record, nil
+	return *record, nil
 }
 
 // Delete - delete a record from the database
@@ -187,7 +187,7 @@ func (driver *SQLiteDriver) Delete(key string) error {
 }
 
 // Compare - compare a record to the database
-func (driver *SQLiteDriver) Compare(record *KvRecord) (bool, error) {
+func (driver *SQLiteDriver) Compare(record KvRecord) (bool, error) {
 	// get the record
 	dbRecord, err := driver.Read(record.Key)
 	if err != nil {
@@ -196,11 +196,11 @@ func (driver *SQLiteDriver) Compare(record *KvRecord) (bool, error) {
 	}
 
 	// compare the records
-	return matchRecords(record, dbRecord), nil
+	return matchRecords(record, &dbRecord), nil
 }
 
 // Load - load all records from the database
-func (driver *SQLiteDriver) Load() ([]*KvRecord, error) {
+func (driver *SQLiteDriver) Load() ([]KvRecord, error) {
 	// open the database
 	db, err := sql.Open("sqlite3", driver.dbLocation)
 
@@ -221,7 +221,7 @@ func (driver *SQLiteDriver) Load() ([]*KvRecord, error) {
 	defer rows.Close()
 
 	// load the records
-	records := []*KvRecord{}
+	records := []KvRecord{}
 	for rows.Next() {
 		var key string
 		err := rows.Scan(&key)
@@ -499,7 +499,7 @@ func makeToken() string {
 }
 
 // match records 
-func matchRecords(record1 *KvRecord, record2 *KvRecord) bool {
+func matchRecords(record1 KvRecord, record2 *KvRecord) bool {
 	if record1.Key != record2.Key {
 		return false
 	}
