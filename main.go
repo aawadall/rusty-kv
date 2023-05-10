@@ -20,7 +20,7 @@ func main() {
 	// Experiment: directly use sqlite driver
 	if featureFlagManager.IsEnabled("direct_sqlite") {
 		location := "local.sqlite"
-		driver := persistence.NewSQLiteDatabaseDriver(location)
+		driver := persistence.NewSQLiteDriver(location)
 
 		// prepare record
 		record := types.NewKVRecord("test", []byte("test"))
